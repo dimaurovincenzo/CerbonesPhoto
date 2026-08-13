@@ -9,6 +9,13 @@ export interface UpdatePresentation {
   busy: boolean
 }
 
+export interface UpdateBannerPresentation {
+  status: 'available' | 'downloading' | 'downloaded'
+  label: string
+  percent: number | null
+  installable: boolean
+}
+
 export interface UpdatesStoreState {
   snapshot: UpdateSnapshot
   connect: () => () => void
@@ -52,6 +59,36 @@ export function updatePresentation(snapshot: UpdateSnapshot): UpdatePresentation
     case 'idle':
       return { label: 'Verifica aggiornamenti…', action: 'check', busy: false }
   }
+}
+
+export function updateBannerPresentation(snapshot: UpdateSnapshot): UpdateBannerPresentation | null {
+  const version = snapshot.availableVersion ? ` ${snapshot.availableVersion}` : ''
+  const percent = Math.round(Math.max(0, Math.min(100, snapshot.percent ?? 0)))
+  if (snapshot.status === 'available') {
+    return {
+      status: 'available',
+      label: `Preparazione CerbonesPhoto${version}`,
+      percent: null,
+      installable: false
+    }
+  }
+  if (snapshot.status === 'downloading') {
+    return {
+      status: 'downloading',
+      label: `Scaricamento CerbonesPhoto${version}`,
+      percent,
+      installable: false
+    }
+  }
+  if (snapshot.status === 'downloaded') {
+    return {
+      status: 'downloaded',
+      label: `CerbonesPhoto${version} è pronto`,
+      percent: 100,
+      installable: true
+    }
+  }
+  return null
 }
 
 function sameSnapshot(left: UpdateSnapshot, right: UpdateSnapshot): boolean {
@@ -100,4 +137,3 @@ const browserApi: UpdatesApi = {
 }
 
 export const useUpdatesStore = create<UpdatesStoreState>(stateCreator(browserApi))
-

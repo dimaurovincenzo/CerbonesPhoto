@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createUpdatesStore, updatePresentation } from '../src/renderer/src/stores/updates.ts'
+import {
+  createUpdatesStore,
+  updateBannerPresentation,
+  updatePresentation
+} from '../src/renderer/src/stores/updates.ts'
 import type { UpdatesApi } from '../src/shared/api.ts'
 import type { UpdateSnapshot, UpdateStatus } from '../src/shared/update-types.ts'
 
@@ -23,6 +27,26 @@ test('presenta gli stati aggiornamento con azioni chiare', () => {
   })
   assert.deepEqual(updatePresentation(snapshot('unsupported')), {
     label: 'Aggiornamenti non disponibili in questa build', action: null, busy: false
+  })
+})
+
+test('mostra globalmente download e installazione ma non il controllo silenzioso', () => {
+  assert.equal(updateBannerPresentation(snapshot('checking')), null)
+  assert.deepEqual(updateBannerPresentation({
+    ...snapshot('downloading'), availableVersion: '0.1.2', percent: 142.4
+  }), {
+    status: 'downloading',
+    label: 'Scaricamento CerbonesPhoto 0.1.2',
+    percent: 100,
+    installable: false
+  })
+  assert.deepEqual(updateBannerPresentation({
+    ...snapshot('downloaded'), availableVersion: '0.1.2', percent: 100
+  }), {
+    status: 'downloaded',
+    label: 'CerbonesPhoto 0.1.2 è pronto',
+    percent: 100,
+    installable: true
   })
 })
 
@@ -54,4 +78,3 @@ test('connette eventi, inoltra azioni e rimuove la sottoscrizione', async () => 
   assert.deepEqual(calls, ['check', 'install'])
   assert.equal(unsubscribed, true)
 })
-

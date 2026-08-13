@@ -16,6 +16,7 @@ import { usePhotoPipelineStore } from './stores/photo-pipeline'
 import { AboutCerbonesPhoto } from './components/AboutCerbonesPhoto'
 import { useAboutStore } from './stores/about'
 import { useUpdatesStore } from './stores/updates'
+import { UpdateBanner } from './components/UpdateBanner'
 
 function isTyping(el: EventTarget | null): boolean {
   if (!(el instanceof HTMLElement)) return false
@@ -119,6 +120,7 @@ export default function App(): React.JSX.Element {
         )}
       </div>
 
+      <UpdateBanner />
       <PlayerBar />
       <AppFooter />
       <Lightbox />

@@ -1705,6 +1705,67 @@ button:disabled { cursor: default; }
   font-size: 10px;
 }
 .app-footer__signature { white-space: nowrap; }
+.update-banner {
+  position: relative;
+  flex-shrink: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-toolbar));
+  backdrop-filter: saturate(180%) blur(20px);
+  animation: update-banner-enter 180ms cubic-bezier(.2,.75,.3,1) both;
+}
+.update-banner--downloaded { background: color-mix(in srgb, #30a14e 9%, var(--bg-toolbar)); }
+.update-banner__icon {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.update-banner--downloaded .update-banner__icon { color: #238636; background: color-mix(in srgb, #30a14e 14%, transparent); }
+.update-banner__copy { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.update-banner__copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.update-banner__copy > span { color: var(--text-secondary); font-size: 10px; }
+.update-banner__percent { margin-left: auto; flex: 0 0 auto; color: var(--text-secondary); font-size: 11px; font-variant-numeric: tabular-nums; }
+.update-banner__actions { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; }
+.update-banner__later,
+.update-banner__install {
+  min-height: 28px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+}
+.update-banner__later { color: var(--text-secondary); background: transparent; }
+.update-banner__later:hover { color: var(--text-primary); background: var(--bg-hover); }
+.update-banner__install { color: #fff; background: var(--accent); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16); }
+.update-banner__install:hover { background: var(--accent-hover); }
+.update-banner__later:active,
+.update-banner__install:active { transform: scale(0.97); }
+.update-banner__progress {
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.update-banner__progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 160ms ease;
+}
+@keyframes update-banner-enter { from { opacity: 0; transform: translateY(4px); } }
 .photo-pipeline-status {
   min-width: 0;
   display: inline-flex;
@@ -1731,6 +1792,12 @@ button:disabled { cursor: default; }
 @media (max-width: 980px) {
   .app-footer { align-items: flex-start; flex-direction: column; gap: 2px; }
   .app-footer__signature { white-space: normal; }
+  .update-banner__copy > span { display: none; }
+}
+
+@media (max-width: 620px) {
+  .update-banner { flex-wrap: wrap; }
+  .update-banner__actions { width: 100%; margin-left: 38px; }
 }
 
 .zoomable-photo {
