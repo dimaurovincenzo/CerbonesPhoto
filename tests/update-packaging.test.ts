@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import yaml from 'js-yaml'
@@ -34,4 +35,8 @@ test('il packaging produce un canale GitHub aggiornabile arm64 in bozza', () => 
   assert.match(releaseScript, /findLiteralSecrets/)
   assert.match(releaseScript, /app\.asar/)
   assert.match(workflow, /npm run fixtures:raw -- --download\s+?- run: npm test/s)
+  assert.deepEqual(
+    execFileSync('git', ['ls-files', 'build/icon.icns', 'build/icon.png'], { encoding: 'utf8' }).trim().split('\n'),
+    ['build/icon.icns', 'build/icon.png']
+  )
 })
