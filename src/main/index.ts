@@ -256,6 +256,7 @@ function createWindow(): void {
         }
         const screenshotDirectory = process.env['CARTELLI_SCREENSHOT_DIR']
         if (screenshotDirectory) {
+          mkdirSync(screenshotDirectory, { recursive: true })
           for (const [width, height] of [[900, 600], [1180, 720], [1440, 900]]) {
             mainWindow.setSize(width, height)
             await new Promise((done) => setTimeout(done, 120))
