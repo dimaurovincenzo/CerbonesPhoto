@@ -5,6 +5,7 @@ import { getDb } from '../db/connection'
 import { mapCategory, mapFolder, mapTag } from '../db/mappers'
 import { scanRoot } from '../scanner'
 import type { AddRootFolderInput, SqlValue, UpdateFolderPatch } from '@shared/types'
+import type { PhotoRuntime } from '../photo/photo-runtime'
 
 const now = (): number => Date.now()
 
@@ -14,7 +15,7 @@ function assertValidRootPath(p: string): void {
   if (!statSync(p).isDirectory()) throw new Error(`Non è una cartella: ${p}`)
 }
 
-export function registerFoldersIpc(): void {
+export function registerFoldersIpc(photoRuntime: PhotoRuntime): void {
   ipcMain.handle('folders:listRoots', () => {
     const rows = getDb()
       .prepare('SELECT * FROM folders WHERE is_root = 1 ORDER BY sort_order, name')
@@ -90,10 +91,15 @@ export function registerFoldersIpc(): void {
     const row = db.prepare('SELECT * FROM folders WHERE id = ?').get(info.lastInsertRowid) as Record<string, unknown>
     const root = mapFolder(row)
     const children = await scanRoot(root.id)
+    photoRuntime.enqueuePending()
     return { root, children }
   })
 
-  ipcMain.handle('folders:scan', (_e, id: number) => scanRoot(id))
+  ipcMain.handle('folders:scan', async (_e, id: number) => {
+    const children = await scanRoot(id)
+    photoRuntime.enqueuePending()
+    return children
+  })
 
   ipcMain.handle('folders:update', (_e, id: number, patch: UpdateFolderPatch) => {
     const db = getDb()

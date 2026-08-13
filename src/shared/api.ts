@@ -17,6 +17,7 @@ import type {
   UpdateFolderPatch,
   UpdateTagPatch
 } from './types'
+import type { PhotoEngineHealth, PhotoPipelineSnapshot } from './photo-types'
 
 export interface FoldersApi {
   listRoots: () => Promise<Folder[]>
@@ -90,6 +91,16 @@ export interface AppInfo {
   platform: string
 }
 
+export interface PhotoApi {
+  snapshot: () => Promise<PhotoPipelineSnapshot>
+  pause: () => Promise<void>
+  resume: () => Promise<void>
+  retry: (fileId: number) => Promise<boolean>
+  promoteVisible: (fileIds: number[]) => Promise<void>
+  engines: () => Promise<PhotoEngineHealth[]>
+  onSnapshot: (callback: (snapshot: PhotoPipelineSnapshot) => void) => () => void
+}
+
 export interface CartelliApi {
   app: AppInfo
   folders: FoldersApi
@@ -99,5 +110,6 @@ export interface CartelliApi {
   settings: SettingsApi
   dialogs: DialogsApi
   events: EventsApi
+  photo: PhotoApi
   web: WebUtilsApi
 }

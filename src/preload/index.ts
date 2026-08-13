@@ -60,6 +60,19 @@ const api: CartelliApi = {
       return () => ipcRenderer.removeListener('cartelli:menu-action', handler)
     }
   },
+  photo: {
+    snapshot: () => ipcRenderer.invoke('photo:snapshot'),
+    pause: () => ipcRenderer.invoke('photo:pause'),
+    resume: () => ipcRenderer.invoke('photo:resume'),
+    retry: (fileId) => ipcRenderer.invoke('photo:retry', fileId),
+    promoteVisible: (fileIds) => ipcRenderer.invoke('photo:promoteVisible', fileIds),
+    engines: () => ipcRenderer.invoke('photo:engines'),
+    onSnapshot: (callback) => {
+      const handler = (_event: unknown, snapshot: Parameters<typeof callback>[0]): void => callback(snapshot)
+      ipcRenderer.on('photo:snapshot', handler)
+      return () => ipcRenderer.removeListener('photo:snapshot', handler)
+    }
+  },
   web: {
     pathForFile: (file) => webUtils.getPathForFile(file)
   }

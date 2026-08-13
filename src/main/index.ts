@@ -7,6 +7,7 @@ import { runMigrations } from './db/migrations'
 import { registerIpc } from './ipc'
 import { registerMediaProtocols, registerPrivilegedSchemes } from './media-protocol'
 import { setupAppMenu } from './menu'
+import { PhotoRuntime } from './photo/photo-runtime'
 
 // Schemi custom vanno registrati PRIMA di app.ready.
 registerPrivilegedSchemes()
@@ -20,6 +21,9 @@ if (smokeUserData) {
   // Il rebranding non deve nascondere il database creato dalle versioni Cartelli.
   app.setPath('userData', join(app.getPath('appData'), 'Cartelli'))
 }
+
+let photoRuntime: PhotoRuntime | null = null
+let shutdownStarted = false
 
 function seedSmokeData(): void {
   const db = getDb()
@@ -221,14 +225,22 @@ app.whenReady().then(() => {
   openDb()
   runMigrations()
   if (smokeUserData) seedSmokeData()
+  photoRuntime = new PhotoRuntime({
+    db: getDb(),
+    userDataPath: app.getPath('userData'),
+    appPath: app.getAppPath(),
+    resourcesPath: process.resourcesPath,
+    isPackaged: app.isPackaged
+  })
   // 2. Handler IPC (folder/files/tags/categories/settings/dialogs)
-  registerIpc()
+  registerIpc(photoRuntime)
   // 3. Protocolli media (thumb://, media://)
   registerMediaProtocols()
   // 4. Menu applicazione
   setupAppMenu()
   // 5. Finestra
   createWindow()
+  photoRuntime.enqueuePending()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -244,7 +256,18 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
-app.on('before-quit', () => {
+app.on('before-quit', (event) => {
+  if (!shutdownStarted && photoRuntime) {
+    event.preventDefault()
+    shutdownStarted = true
+    void photoRuntime.shutdown().finally(() => {
+      photoRuntime = null
+      closeDb()
+      if (smokeUserData) rmSync(smokeUserData, { recursive: true, force: true })
+      app.quit()
+    })
+    return
+  }
   closeDb()
   if (smokeUserData) rmSync(smokeUserData, { recursive: true, force: true })
 })
