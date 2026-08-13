@@ -9,7 +9,18 @@ type MenuItem = Electron.MenuItemConstructorOptions
 export function setupAppMenu(): void {
   const isMac = process.platform === 'darwin'
 
-  const appItem: MenuItem[] = isMac ? [{ role: 'appMenu' }] : []
+  const appItem: MenuItem[] = isMac ? [{
+    label: 'CerbonesPhoto',
+    submenu: [
+      { label: 'Informazioni su CerbonesPhoto', click: () => sendAction('show-about') },
+      { type: 'separator' },
+      { role: 'services' },
+      { type: 'separator' },
+      { role: 'hide' }, { role: 'hideOthers' }, { role: 'unhide' },
+      { type: 'separator' },
+      { role: 'quit' }
+    ]
+  }] : []
   const closeOrQuit: MenuItem = isMac ? { role: 'close' } : { role: 'quit' }
 
   const template: MenuItem[] = [
@@ -17,6 +28,7 @@ export function setupAppMenu(): void {
     {
       label: 'File',
       submenu: [
+        ...(!isMac ? [{ label: 'Informazioni su CerbonesPhoto', click: () => sendAction('show-about') } as MenuItem] : []),
         {
           label: 'Aggiungi cartella…',
           accelerator: 'CmdOrCtrl+O',

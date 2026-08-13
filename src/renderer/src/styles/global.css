@@ -1786,3 +1786,122 @@ button:disabled { cursor: default; }
 }
 .zoomable-photo__fallback p { margin-bottom: 8px; font-weight: 600; }
 .zoomable-photo__fallback > div { display: flex; justify-content: center; gap: 7px; }
+
+.about-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(12px) saturate(120%);
+  animation: about-fade 160ms ease both;
+}
+.about-dialog {
+  position: relative;
+  width: min(430px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 26px 28px 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-card) 94%, #fff);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+  outline: none;
+  animation: about-enter 220ms cubic-bezier(.2,.8,.3,1) both;
+}
+.about-dialog__close {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: rgba(0, 0, 0, 0.56);
+  background: #ff5f57;
+  font-size: 0;
+}
+.about-dialog__close::after { content: '×'; font-size: 12px; opacity: 0; transition: opacity 100ms ease; }
+.about-dialog__close:hover::after, .about-dialog__close:focus-visible::after { opacity: 1; }
+.about-dialog__lens {
+  all: unset;
+  width: 104px;
+  height: 104px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.about-dialog__lens:hover { transform: translateY(-2px) scale(1.015); box-shadow: 0 14px 36px rgba(0, 0, 0, 0.24); }
+.about-dialog__lens:active { transform: scale(0.97); }
+.about-dialog__lens img { width: 100%; height: 100%; object-fit: cover; }
+.about-dialog h1 { margin-top: 16px; font-size: 22px; letter-spacing: -0.025em; }
+.about-dialog__version {
+  all: unset;
+  margin-top: 2px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+.about-dialog__version:hover { background: var(--bg-hover); color: var(--text-primary); }
+.about-dialog__tagline { margin-top: 12px; color: var(--text-secondary); text-align: center; }
+.about-engines {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+.about-engines span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  font-size: 9px;
+}
+.about-engines .is-ready svg { color: #248a3d; }
+.about-engines .is-unavailable svg { color: #b54708; }
+.about-dialog__signature { margin-top: 18px; color: var(--text-secondary); font-size: 10px; }
+.about-dialog__joke {
+  min-height: 34px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  text-align: center;
+  font-size: 11px;
+  animation: about-fade 160ms ease both;
+}
+.about-effect { pointer-events: none; position: absolute; inset: 0; z-index: 2; border-radius: inherit; }
+.about-effect--shutter { background: #111; animation: about-shutter 320ms ease both; }
+.about-effect--polaroid {
+  inset: auto 50% 22px auto;
+  width: 112px;
+  height: 132px;
+  padding: 8px 8px 26px;
+  transform: translateX(50%) rotate(-3deg);
+  border-radius: 2px;
+  background: #f8f4e9;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.28);
+  animation: about-polaroid 500ms cubic-bezier(.2,.85,.3,1) both;
+}
+.about-effect--polaroid img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+@keyframes about-fade { from { opacity: 0; } }
+@keyframes about-enter { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+@keyframes about-shutter { 0%, 100% { opacity: 0; } 45%, 58% { opacity: .92; } }
+@keyframes about-polaroid { from { opacity: 0; transform: translateX(50%) translateY(-45px) rotate(7deg) scale(.86); } }

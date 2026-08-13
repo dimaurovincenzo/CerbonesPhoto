@@ -13,6 +13,8 @@ import { useUiStore } from './stores/ui'
 import { PaneResizer } from './components/PaneResizer'
 import { AppFooter } from './components/AppFooter'
 import { usePhotoPipelineStore } from './stores/photo-pipeline'
+import { AboutCerbonesPhoto } from './components/AboutCerbonesPhoto'
+import { useAboutStore } from './stores/about'
 
 function isTyping(el: EventTarget | null): boolean {
   if (!(el instanceof HTMLElement)) return false
@@ -45,6 +47,7 @@ export default function App(): React.JSX.Element {
         if (id != null) void useFoldersStore.getState().rescan(id)
       }
       if (action === 'toggle-inspector') useUiStore.getState().toggleInspector()
+      if (action === 'show-about') useAboutStore.getState().show()
     })
   }, [])
 
@@ -118,6 +121,7 @@ export default function App(): React.JSX.Element {
       <AppFooter />
       <Lightbox />
       <Dropzone />
+      <AboutCerbonesPhoto />
     </div>
   )
 }
