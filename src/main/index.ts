@@ -142,8 +142,20 @@ function createWindow(): void {
   }
 
   if (process.env['CARTELLI_SMOKE'] === '1') {
-    mainWindow.webContents.once('did-finish-load', () => {
-      mainWindow.webContents.send('cartelli:menu-action', 'show-about')
+    mainWindow.webContents.once('did-finish-load', async () => {
+      try {
+        // did-finish-load può precedere gli effect React che sottoscrivono le azioni menu.
+        // Attendiamo un commit visibile e un turno del loop per evitare di perdere show-about.
+        await mainWindow.webContents.executeJavaScript(`
+          new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 50)))
+        `)
+        mainWindow.webContents.send('cartelli:menu-action', 'show-about')
+      } catch (error) {
+        console.error('[smoke] FAILED', error)
+        app.exit(1)
+        return
+      }
+
       void mainWindow.webContents.executeJavaScript(`
         new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(async () => {
           const waitFor = async (selector, timeout = 3000) => {
