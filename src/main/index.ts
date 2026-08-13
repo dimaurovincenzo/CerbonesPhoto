@@ -280,6 +280,7 @@ function createWindow(): void {
             shell: Boolean(document.querySelector('.app-shell')),
             fatal: Boolean(document.querySelector('.fatal-state')),
             title: document.title,
+            appVersion: window.cartelli.app.version,
             bilingual: italian.length === 1 && english.length === 1 && italian[0].id === english[0].id,
             filters: filterButtons.length === 4 && videoFilter?.classList.contains('is-selected'),
             lightboxOpened: photoLightboxOpened,
@@ -306,12 +307,12 @@ function createWindow(): void {
           })
         })))
       `).then(async (state: {
-        shell: boolean; fatal: boolean; title: string; bilingual: boolean; filters: boolean
+        shell: boolean; fatal: boolean; title: string; appVersion: string; bilingual: boolean; filters: boolean
         lightboxOpened: boolean; zoomWorks: boolean; progressivePreview: boolean; photoCanvasFitsStage: boolean; photoCanvasMetrics: unknown; photoControls: boolean; about: boolean; updateStatus: boolean; signature: boolean
         inspectorHidden: boolean; noTechnicalPaths: boolean; labels: boolean; labelRemoval: boolean; markerOrder: boolean
         resizable: boolean; tabs: boolean; noPageOverflow: boolean
       }) => {
-        if (!state.shell || state.fatal || !state.bilingual || !state.filters ||
+        if (!state.shell || state.fatal || state.appVersion !== app.getVersion() || !state.bilingual || !state.filters ||
             !state.lightboxOpened || !state.zoomWorks || !state.progressivePreview || !state.photoCanvasFitsStage || !state.photoControls || !state.about || !state.updateStatus || !state.signature ||
             !state.inspectorHidden || !state.noTechnicalPaths ||
             !state.labels || !state.labelRemoval || !state.markerOrder || !state.resizable || !state.tabs || !state.noPageOverflow) {

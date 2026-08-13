@@ -8,7 +8,7 @@ import type { CartelliApi } from '@shared/api'
  */
 const api: CartelliApi = {
   app: {
-    version: process.env.npm_package_version ?? '0.0.0',
+    version: ipcRenderer.sendSync('app:getVersion') as string,
     platform: process.platform
   },
   folders: {

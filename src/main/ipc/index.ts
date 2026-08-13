@@ -8,9 +8,11 @@ import { registerPhotoIpc } from './photo'
 import type { PhotoRuntime } from '../photo/photo-runtime'
 import type { UpdateRuntime } from '../updater/update-runtime'
 import { registerUpdatesIpc } from './updates'
+import { registerAppInfoIpc } from './app-info'
 
 /** Registra tutti gli handler IPC del main process. Chiamare dopo l'apertura del DB. */
 export function registerIpc(photoRuntime: PhotoRuntime, updateRuntime: UpdateRuntime): void {
+  registerAppInfoIpc()
   registerFoldersIpc(photoRuntime)
   registerFilesIpc()
   registerTagsIpc()
