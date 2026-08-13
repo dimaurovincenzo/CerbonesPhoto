@@ -53,6 +53,7 @@ export function mapFile(r: Row): MediaFile {
     kind: r.kind as MediaKind,
     mime: (r.mime as string | null) ?? null,
     sizeBytes: (r.size_bytes as number | null) ?? null,
+    sourceMtimeMs: (r.source_mtime_ms as number | null) ?? null,
     width: (r.width as number | null) ?? null,
     height: (r.height as number | null) ?? null,
     durationMs: (r.duration_ms as number | null) ?? null,

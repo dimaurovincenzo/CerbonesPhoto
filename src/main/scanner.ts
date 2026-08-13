@@ -4,7 +4,7 @@ import { join } from 'path'
 import { getDb } from './db/connection'
 import { mapFolder } from './db/mappers'
 import type { Folder } from '@shared/types'
-import { MEDIA_MIME } from '@shared/media-formats'
+import { MEDIA_MIME, photoFormatFromPath } from '@shared/media-formats'
 import { walkMedia } from './scanner-batch'
 
 /** Directory da ignorare sempre durante la scansione. */
@@ -94,14 +94,27 @@ function insertTree(db: DatabaseSync, nodes: TreeNode[], parentId: number, ts: n
 /** Scopre i file multimediali di una cartella e fa upsert nella tabella files. */
 async function scanFilesOfFolder(db: DatabaseSync, folderId: number, folderPath: string, ts: number): Promise<number> {
   const upsert = db.prepare(
-    `INSERT INTO files (folder_id, path, name, kind, mime, size_bytes, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO files
+       (folder_id, path, name, kind, mime, size_bytes, source_mtime_ms, photo_format, is_raw, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(path) DO UPDATE SET
        folder_id   = excluded.folder_id,
        name        = excluded.name,
        kind        = excluded.kind,
        mime        = excluded.mime,
        size_bytes  = excluded.size_bytes,
+       source_mtime_ms = excluded.source_mtime_ms,
+       photo_format = excluded.photo_format,
+       is_raw = excluded.is_raw,
+       processing_state = CASE
+         WHEN files.source_mtime_ms IS NOT excluded.source_mtime_ms OR files.size_bytes IS NOT excluded.size_bytes
+         THEN 'pending' ELSE files.processing_state END,
+       processing_error_code = CASE
+         WHEN files.source_mtime_ms IS NOT excluded.source_mtime_ms OR files.size_bytes IS NOT excluded.size_bytes
+         THEN NULL ELSE files.processing_error_code END,
+       processing_error_message = CASE
+         WHEN files.source_mtime_ms IS NOT excluded.source_mtime_ms OR files.size_bytes IS NOT excluded.size_bytes
+         THEN NULL ELSE files.processing_error_message END,
        updated_at  = excluded.updated_at`
   )
   const seenPaths = new Set<string>()
@@ -113,7 +126,11 @@ async function scanFilesOfFolder(db: DatabaseSync, folderId: number, folderPath:
     db.exec('BEGIN IMMEDIATE')
     try {
       for (const entry of batch.entries) {
-        upsert.run(folderId, entry.path, entry.name, entry.kind, entry.mime, entry.sizeBytes, ts, ts)
+        const format = entry.kind === 'image' ? photoFormatFromPath(entry.path) : null
+        upsert.run(
+          folderId, entry.path, entry.name, entry.kind, entry.mime, entry.sizeBytes, entry.mtimeMs,
+          format?.extension ?? null, format?.family === 'raw' ? 1 : 0, ts, ts
+        )
         seenPaths.add(entry.path)
         count++
       }

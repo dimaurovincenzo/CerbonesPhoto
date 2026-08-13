@@ -34,6 +34,7 @@ export interface MediaFile {
   kind: MediaKind
   mime: string | null
   sizeBytes: number | null
+  sourceMtimeMs: number | null
   width: number | null
   height: number | null
   durationMs: number | null

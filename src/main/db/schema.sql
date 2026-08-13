@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS files (
   kind           TEXT    NOT NULL CHECK (kind IN ('audio','image','video','other')),
   mime           TEXT,
   size_bytes     INTEGER,
+  source_mtime_ms REAL,
   width          INTEGER,
   height         INTEGER,
   duration_ms    INTEGER,

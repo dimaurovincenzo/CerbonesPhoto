@@ -76,7 +76,8 @@ function migratePhotoWorkflow(db: ReturnType<typeof getDb>): void {
     ['pipeline_version', 'INTEGER NOT NULL DEFAULT 1'],
     ['processing_error_code', 'TEXT'],
     ['processing_error_message', 'TEXT'],
-    ['last_processed_at', 'INTEGER']
+    ['last_processed_at', 'INTEGER'],
+    ['source_mtime_ms', 'REAL']
   ]
 
   db.exec('BEGIN IMMEDIATE')

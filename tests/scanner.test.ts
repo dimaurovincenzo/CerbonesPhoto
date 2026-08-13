@@ -50,10 +50,17 @@ test('la nuova scansione rimuove dall’indice file eliminati o non più multime
 
   writeFileSync(join(rootPath, 'source.ts'), 'export const value = 1')
   writeFileSync(join(rootPath, 'foto.jpg'), 'jpeg fixture')
+  writeFileSync(join(rootPath, 'fotocamera.cr3'), 'raw fixture')
 
   await scanRoot(Number(root.lastInsertRowid), db)
 
-  const rows = db.prepare('SELECT name, kind FROM files ORDER BY name').all()
-    .map((row) => ({ name: row['name'], kind: row['kind'] }))
-  assert.deepEqual(rows, [{ name: 'foto.jpg', kind: 'image' }])
+  const rows = db.prepare('SELECT name, kind, photo_format, is_raw, source_mtime_ms FROM files ORDER BY name').all()
+    .map((row) => ({
+      name: row['name'], kind: row['kind'], photoFormat: row['photo_format'],
+      isRaw: row['is_raw'], hasMtime: Number(row['source_mtime_ms']) > 0
+    }))
+  assert.deepEqual(rows, [
+    { name: 'foto.jpg', kind: 'image', photoFormat: 'jpg', isRaw: 0, hasMtime: true },
+    { name: 'fotocamera.cr3', kind: 'image', photoFormat: 'cr3', isRaw: 1, hasMtime: true }
+  ])
 })

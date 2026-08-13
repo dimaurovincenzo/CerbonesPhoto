@@ -16,7 +16,7 @@ async function sha256(path: string): Promise<string> {
 function mediaFile(path: string, isRaw = false): MediaFile {
   return {
     id: 7, folderId: 1, path, name: 'foto.jpg', kind: 'image', mime: 'image/jpeg',
-    sizeBytes: null, width: null, height: null, durationMs: null, hash: null,
+    sizeBytes: null, sourceMtimeMs: null, width: null, height: null, durationMs: null, hash: null,
     isFavorite: false, metadataJson: null, processingState: 'pending', photoFormat: isRaw ? 'cr3' : 'jpg',
     isRaw, cameraMake: null, cameraModel: null, capturedAt: null, orientation: null,
     colorProfile: null, pipelineVersion: 1, processingErrorCode: null,

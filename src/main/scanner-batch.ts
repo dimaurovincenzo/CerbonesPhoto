@@ -9,6 +9,7 @@ export interface ScannedMediaEntry {
   kind: Exclude<MediaKind, 'other'>
   mime: string
   sizeBytes: number
+  mtimeMs: number
 }
 
 export interface ScannedEntryBatch {
@@ -44,7 +45,14 @@ export async function* walkMedia(
       const path = join(directory, dirent.name)
       try {
         const fileStat = await stat(path)
-        entries.push({ name: dirent.name, path, kind, mime: mimeFromPath(path), sizeBytes: fileStat.size })
+        entries.push({
+          name: dirent.name,
+          path,
+          kind,
+          mime: mimeFromPath(path),
+          sizeBytes: fileStat.size,
+          mtimeMs: fileStat.mtimeMs
+        })
       } catch {
         continue
       }
