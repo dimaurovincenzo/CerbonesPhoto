@@ -1706,3 +1706,83 @@ button:disabled { cursor: default; }
   .app-footer { align-items: flex-start; flex-direction: column; gap: 2px; }
   .app-footer__signature { white-space: normal; }
 }
+
+.zoomable-photo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  outline: none;
+  touch-action: none;
+}
+.zoomable-photo.is-zoomed { cursor: grab; }
+.zoomable-photo.is-zoomed:active { cursor: grabbing; }
+.zoomable-photo__image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transform-origin: center;
+  transition: transform 140ms cubic-bezier(.2,.7,.3,1), opacity 120ms ease;
+  will-change: transform;
+}
+.zoomable-photo__controls {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9px;
+  color: #fff;
+  background: rgba(28, 28, 30, 0.76);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.22);
+}
+.zoomable-photo__controls button {
+  all: unset;
+  min-width: 28px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: inherit;
+}
+.zoomable-photo__controls button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); }
+.zoomable-photo__controls button:active:not(:disabled) { transform: scale(0.96); }
+.zoomable-photo__controls button:disabled { opacity: 0.35; }
+.zoomable-photo__controls .zoomable-photo__scale { min-width: 48px; font-size: 10px; font-variant-numeric: tabular-nums; }
+.zoomable-photo__quality {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  color: #fff;
+  background: rgba(28, 28, 30, 0.72);
+  backdrop-filter: blur(14px);
+  font-size: 10px;
+}
+.zoomable-photo__fallback {
+  position: absolute;
+  inset: auto 50% 14px auto;
+  transform: translateX(50%);
+  min-width: min(360px, calc(100% - 28px));
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  color: #fff;
+  background: rgba(28, 28, 30, 0.86);
+  backdrop-filter: blur(18px);
+  text-align: center;
+}
+.zoomable-photo__fallback p { margin-bottom: 8px; font-weight: 600; }
+.zoomable-photo__fallback > div { display: flex; justify-content: center; gap: 7px; }

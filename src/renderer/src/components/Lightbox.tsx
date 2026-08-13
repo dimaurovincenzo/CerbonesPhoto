@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, ExternalLink, X } from 'lucide-react'
 import { useLightboxStore } from '@renderer/stores/lightbox'
+import { ZoomablePhoto } from './ZoomablePhoto'
 
 /** Quick Look full-screen per immagini e video, navigabile da tastiera. */
 export function Lightbox(): React.JSX.Element | null {
@@ -18,6 +19,7 @@ export function Lightbox(): React.JSX.Element | null {
   useEffect(() => {
     if (!current) return
     const onKey = (e: KeyboardEvent): void => {
+      if (e.defaultPrevented) return
       if (e.key === 'Escape') close()
       else if (e.key === 'ArrowRight') next()
       else if (e.key === 'ArrowLeft') prev()
@@ -60,19 +62,14 @@ export function Lightbox(): React.JSX.Element | null {
       )}
 
       <div className="lightbox__stage" onClick={(e) => e.stopPropagation()}>
-        {!mediaError && current.kind === 'video' ? (
+        {current.kind === 'image' ? (
+          <ZoomablePhoto key={current.id} file={current} onOpenExternal={() => void window.cartelli.files.open(current.id)} />
+        ) : !mediaError && current.kind === 'video' ? (
           <video
             className="lightbox__video"
             src={`media://file/${current.id}`}
             controls
             autoPlay
-            onError={() => setMediaError(true)}
-          />
-        ) : !mediaError ? (
-          <img
-            className="lightbox__img"
-            src={`media://file/${current.id}`}
-            alt={current.name}
             onError={() => setMediaError(true)}
           />
         ) : (
