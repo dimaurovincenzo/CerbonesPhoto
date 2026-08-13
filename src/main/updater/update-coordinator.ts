@@ -12,8 +12,8 @@ interface UpdateCoordinatorOptions {
 
 type SnapshotListener = (snapshot: UpdateSnapshot) => void
 
-function sanitizeError(error: Error): string {
-  return error.message
+export function sanitizeUpdateMessage(value: string): string {
+  return value
     .replace(/https?:\/\/\S+/gi, '[url]')
     .replace(/\b[A-Za-z]:\\\S+/g, '[path]')
     .replace(/\/(?:Users|private|var|tmp)\/\S+/g, '[path]')
@@ -113,7 +113,7 @@ export class UpdateCoordinator {
   }
 
   private handleError(error: Error): void {
-    this.setState({ status: 'error', percent: null, message: sanitizeError(error) })
+    this.setState({ status: 'error', percent: null, message: sanitizeUpdateMessage(error.message) })
     this.finishPending()
   }
 

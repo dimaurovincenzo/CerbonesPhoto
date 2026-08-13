@@ -18,6 +18,7 @@ import type {
   UpdateTagPatch
 } from './types'
 import type { PhotoEngineHealth, PhotoPipelineSnapshot } from './photo-types'
+import type { UpdateSnapshot } from './update-types'
 
 export interface FoldersApi {
   listRoots: () => Promise<Folder[]>
@@ -91,6 +92,13 @@ export interface AppInfo {
   platform: string
 }
 
+export interface UpdatesApi {
+  snapshot: () => Promise<UpdateSnapshot>
+  check: () => Promise<UpdateSnapshot>
+  install: () => Promise<boolean>
+  onSnapshot: (callback: (snapshot: UpdateSnapshot) => void) => () => void
+}
+
 export interface PhotoApi {
   snapshot: () => Promise<PhotoPipelineSnapshot>
   pause: () => Promise<void>
@@ -111,5 +119,6 @@ export interface CartelliApi {
   dialogs: DialogsApi
   events: EventsApi
   photo: PhotoApi
+  updates: UpdatesApi
   web: WebUtilsApi
 }

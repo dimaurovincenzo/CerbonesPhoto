@@ -1,4 +1,5 @@
 import { BrowserWindow, Menu, shell } from 'electron'
+import type { UpdateRuntimeApi } from './ipc/update-router'
 
 type MenuItem = Electron.MenuItemConstructorOptions
 
@@ -6,13 +7,18 @@ type MenuItem = Electron.MenuItemConstructorOptions
  * Menu applicazione in stile macOS. Le azioni custom inviano un evento al
  * renderer via webContents.send('cartelli:menu-action', action).
  */
-export function setupAppMenu(): void {
+export function setupAppMenu(updateRuntime: UpdateRuntimeApi): void {
   const isMac = process.platform === 'darwin'
 
   const appItem: MenuItem[] = isMac ? [{
     label: 'CerbonesPhoto',
     submenu: [
       { label: 'Informazioni su CerbonesPhoto', click: () => sendAction('show-about') },
+      {
+        id: 'check-for-updates',
+        label: 'Verifica aggiornamenti…',
+        click: () => void updateRuntime.checkManual()
+      },
       { type: 'separator' },
       { role: 'services' },
       { type: 'separator' },
@@ -75,7 +81,12 @@ export function setupAppMenu(): void {
     }
   ]
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+  const menu = Menu.buildFromTemplate(template)
+  const updateItem = menu.getMenuItemById('check-for-updates')
+  updateRuntime.subscribe((snapshot) => {
+    if (updateItem) updateItem.enabled = !['checking', 'available', 'downloading'].includes(snapshot.status)
+  })
+  Menu.setApplicationMenu(menu)
 }
 
 function sendAction(action: string): void {

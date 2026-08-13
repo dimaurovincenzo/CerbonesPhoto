@@ -8,6 +8,10 @@ import { registerIpc } from './ipc'
 import { registerMediaProtocols, registerPrivilegedSchemes } from './media-protocol'
 import { setupAppMenu } from './menu'
 import { PhotoRuntime } from './photo/photo-runtime'
+import type { UpdaterPort } from '../shared/update-types'
+import { UpdateCoordinator } from './updater/update-coordinator'
+import { createProductionUpdatePort } from './updater/electron-update-bootstrap'
+import { createUpdateRuntime, type UpdateRuntime } from './updater/update-runtime'
 
 // Schemi custom vanno registrati PRIMA di app.ready.
 registerPrivilegedSchemes()
@@ -23,7 +27,22 @@ if (smokeUserData) {
 }
 
 let photoRuntime: PhotoRuntime | null = null
+let updateRuntime: UpdateRuntime | null = null
 let shutdownStarted = false
+
+function unavailableUpdatePort(): UpdaterPort {
+  const off = (): (() => void) => () => undefined
+  return {
+    checkForUpdates: async () => undefined,
+    quitAndInstall: () => undefined,
+    onChecking: off,
+    onAvailable: off,
+    onProgress: off,
+    onDownloaded: off,
+    onUpToDate: off,
+    onError: off
+  }
+}
 
 function seedSmokeData(): void {
   const db = getDb()
@@ -85,6 +104,7 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+    updateRuntime?.start()
   })
 
   // Lo stdout può essere chiuso quando l'app viene avviata fuori dal terminale.
@@ -310,12 +330,34 @@ app.whenReady().then(() => {
     resourcesPath: process.resourcesPath,
     isPackaged: app.isPackaged
   })
+  const updatesSupported = app.isPackaged && process.env['CARTELLI_SMOKE'] !== '1' && process.platform === 'darwin'
+  const updateCoordinator = new UpdateCoordinator(
+    updatesSupported ? createProductionUpdatePort() : unavailableUpdatePort(),
+    { currentVersion: app.getVersion(), supported: updatesSupported }
+  )
+  updateRuntime = createUpdateRuntime({ coordinator: updateCoordinator, supported: updatesSupported })
+  let promptedVersion: string | null = null
+  updateRuntime.subscribe((snapshot) => {
+    if (snapshot.status !== 'downloaded' || !snapshot.availableVersion || snapshot.availableVersion === promptedVersion) return
+    promptedVersion = snapshot.availableVersion
+    void dialog.showMessageBox({
+      type: 'info',
+      title: 'Aggiornamento pronto',
+      message: `CerbonesPhoto ${snapshot.availableVersion} è pronto.`,
+      detail: 'L’app verrà chiusa e riavviata per completare l’installazione.',
+      buttons: ['Installa e riavvia', 'Più tardi'],
+      defaultId: 0,
+      cancelId: 1
+    }).then((result) => {
+      if (result.response === 0) updateRuntime?.install()
+    })
+  })
   // 2. Handler IPC (folder/files/tags/categories/settings/dialogs)
-  registerIpc(photoRuntime)
+  registerIpc(photoRuntime, updateRuntime)
   // 3. Protocolli media (thumb://, media://)
   registerMediaProtocols(photoRuntime)
   // 4. Menu applicazione
-  setupAppMenu()
+  setupAppMenu(updateRuntime)
   // 5. Finestra
   createWindow()
   photoRuntime.enqueuePending()
@@ -338,6 +380,8 @@ app.on('before-quit', (event) => {
   if (!shutdownStarted && photoRuntime) {
     event.preventDefault()
     shutdownStarted = true
+    updateRuntime?.dispose()
+    updateRuntime = null
     void photoRuntime.shutdown().finally(() => {
       photoRuntime = null
       closeDb()

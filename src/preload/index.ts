@@ -73,6 +73,16 @@ const api: CartelliApi = {
       return () => ipcRenderer.removeListener('photo:snapshot', handler)
     }
   },
+  updates: {
+    snapshot: () => ipcRenderer.invoke('updates:snapshot'),
+    check: () => ipcRenderer.invoke('updates:check'),
+    install: () => ipcRenderer.invoke('updates:install'),
+    onSnapshot: (callback) => {
+      const handler = (_event: unknown, snapshot: Parameters<typeof callback>[0]): void => callback(snapshot)
+      ipcRenderer.on('updates:snapshot-event', handler)
+      return () => ipcRenderer.removeListener('updates:snapshot-event', handler)
+    }
+  },
   web: {
     pathForFile: (file) => webUtils.getPathForFile(file)
   }
