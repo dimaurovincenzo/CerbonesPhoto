@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { usePlayerStore } from '@renderer/stores/player'
 import type { MediaFile } from '@shared/types'
+import { connectMediaSession, type MediaSessionPort } from './media-session'
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
@@ -58,6 +59,34 @@ export function PlayerBar(): React.JSX.Element {
 
   const current: MediaFile | undefined = index >= 0 ? queue[index] : undefined
   const hidden = !current
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return undefined
+
+    const session: MediaSessionPort = {
+      setActionHandler: (action, handler) => navigator.mediaSession.setActionHandler(action, handler)
+    }
+    return connectMediaSession(session, {
+      play: () => {
+        const player = usePlayerStore.getState()
+        if (!player.isPlaying) player.togglePlay()
+      },
+      pause: () => {
+        const player = usePlayerStore.getState()
+        if (player.isPlaying) player.togglePlay()
+      },
+      next: () => usePlayerStore.getState().next(),
+      previous: () => usePlayerStore.getState().prev()
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return
+    navigator.mediaSession.playbackState = current ? (isPlaying ? 'playing' : 'paused') : 'none'
+    navigator.mediaSession.metadata = current
+      ? new MediaMetadata({ title: current.name, album: 'CerbonesPhoto' })
+      : null
+  }, [current, isPlaying])
 
   return (
     <div className={`player-bar${hidden ? ' player-bar--hidden' : ''}`}>

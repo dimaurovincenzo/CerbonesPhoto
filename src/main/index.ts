@@ -286,6 +286,7 @@ function createWindow(): void {
             lightboxOpened: photoLightboxOpened,
             zoomWorks,
             progressivePreview,
+            mediaSession: 'mediaSession' in navigator,
             photoCanvasFitsStage,
             photoCanvasMetrics,
             photoControls: !pausedBefore.paused && pausedDuring.paused && !pausedAfter.paused,
@@ -308,12 +309,12 @@ function createWindow(): void {
         })))
       `).then(async (state: {
         shell: boolean; fatal: boolean; title: string; appVersion: string; bilingual: boolean; filters: boolean
-        lightboxOpened: boolean; zoomWorks: boolean; progressivePreview: boolean; photoCanvasFitsStage: boolean; photoCanvasMetrics: unknown; photoControls: boolean; about: boolean; updateStatus: boolean; signature: boolean
+        lightboxOpened: boolean; zoomWorks: boolean; progressivePreview: boolean; mediaSession: boolean; photoCanvasFitsStage: boolean; photoCanvasMetrics: unknown; photoControls: boolean; about: boolean; updateStatus: boolean; signature: boolean
         inspectorHidden: boolean; noTechnicalPaths: boolean; labels: boolean; labelRemoval: boolean; markerOrder: boolean
         resizable: boolean; tabs: boolean; noPageOverflow: boolean
       }) => {
         if (!state.shell || state.fatal || state.appVersion !== app.getVersion() || !state.bilingual || !state.filters ||
-            !state.lightboxOpened || !state.zoomWorks || !state.progressivePreview || !state.photoCanvasFitsStage || !state.photoControls || !state.about || !state.updateStatus || !state.signature ||
+            !state.lightboxOpened || !state.zoomWorks || !state.progressivePreview || !state.mediaSession || !state.photoCanvasFitsStage || !state.photoControls || !state.about || !state.updateStatus || !state.signature ||
             !state.inspectorHidden || !state.noTechnicalPaths ||
             !state.labels || !state.labelRemoval || !state.markerOrder || !state.resizable || !state.tabs || !state.noPageOverflow) {
           throw new Error(`Renderer non valido: ${JSON.stringify(state)}`)
