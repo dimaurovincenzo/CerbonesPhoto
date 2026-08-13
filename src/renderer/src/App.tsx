@@ -11,6 +11,8 @@ import { useLabelsStore } from './stores/labels'
 import { usePlayerStore } from './stores/player'
 import { useUiStore } from './stores/ui'
 import { PaneResizer } from './components/PaneResizer'
+import { AppFooter } from './components/AppFooter'
+import { usePhotoPipelineStore } from './stores/photo-pipeline'
 
 function isTyping(el: EventTarget | null): boolean {
   if (!(el instanceof HTMLElement)) return false
@@ -31,6 +33,8 @@ export default function App(): React.JSX.Element {
     void loadAll()
     void loadLabels()
   }, [loadAll, loadLabels])
+
+  useEffect(() => usePhotoPipelineStore.getState().connect(), [])
 
   // Menu app → azioni nel renderer
   useEffect(() => {
@@ -111,6 +115,7 @@ export default function App(): React.JSX.Element {
       </div>
 
       <PlayerBar />
+      <AppFooter />
       <Lightbox />
       <Dropzone />
     </div>
