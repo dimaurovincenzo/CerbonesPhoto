@@ -1,39 +1,4 @@
-const LEXICON: readonly (readonly string[])[] = [
-  ['mare', 'sea'],
-  ['spiaggia', 'beach'],
-  ['montagna', 'mountain'],
-  ['tramonto', 'sunset'],
-  ['alba', 'sunrise'],
-  ['estate', 'summer'],
-  ['inverno', 'winter'],
-  ['primavera', 'spring'],
-  ['autunno', 'autumn', 'fall'],
-  ['viaggio', 'travel', 'trip'],
-  ['vacanza', 'holiday', 'vacation'],
-  ['famiglia', 'family'],
-  ['amici', 'friends'],
-  ['bambino', 'bambini', 'child', 'children', 'kid', 'kids'],
-  ['compleanno', 'birthday'],
-  ['matrimonio', 'wedding'],
-  ['festa', 'party'],
-  ['casa', 'home', 'house'],
-  ['lavoro', 'work'],
-  ['musica', 'music'],
-  ['canzone', 'song'],
-  ['registrazione', 'recording'],
-  ['voce', 'voice'],
-  ['foto', 'fotografia', 'photo', 'picture', 'image'],
-  ['video', 'filmato', 'movie', 'clip'],
-  ['documento', 'document'],
-  ['preferito', 'preferiti', 'favorite', 'favorites'],
-  ['nuovo', 'new'],
-  ['vecchio', 'old'],
-  ['gatto', 'cat'],
-  ['cane', 'dog'],
-  ['citta', 'city'],
-  ['notte', 'night'],
-  ['giorno', 'day']
-]
+import { SEARCH_LEXICON } from './search-lexicon.ts'
 
 const BY_TERM = new Map<string, readonly string[]>()
 
@@ -47,7 +12,7 @@ export function normalizeSearchText(value: string): string {
     .replace(/\s+/g, ' ')
 }
 
-for (const rawGroup of LEXICON) {
+for (const rawGroup of SEARCH_LEXICON) {
   const group = [...new Set(rawGroup.map(normalizeSearchText))].sort((a, b) => a.localeCompare(b, 'it'))
   for (const term of group) BY_TERM.set(term, group)
 }
@@ -57,15 +22,29 @@ export function expandSearchQuery(query: string): string[][] {
   const normalized = normalizeSearchText(query)
   if (!normalized) return []
 
+  const tokens = normalized.split(' ')
   const seen = new Set<string>()
   const groups: string[][] = []
-  for (const token of normalized.split(' ')) {
-    const group = [...(BY_TERM.get(token) ?? [token])]
+  for (let index = 0; index < tokens.length;) {
+    let phrase = tokens[index]
+    let consumed = 1
+    // I nomi file usano spesso parole separate mentre la query contiene un
+    // concetto composto: preferire sempre la frase lessicale più lunga.
+    for (let end = tokens.length; end > index + 1; end--) {
+      const candidate = tokens.slice(index, end).join(' ')
+      if (BY_TERM.has(candidate)) {
+        phrase = candidate
+        consumed = end - index
+        break
+      }
+    }
+    const group = [...(BY_TERM.get(phrase) ?? [phrase])]
     const key = group.join('\u0000')
     if (!seen.has(key)) {
       seen.add(key)
       groups.push(group)
     }
+    index += consumed
   }
   return groups
 }
@@ -76,6 +55,7 @@ export function scoreBilingualMatch(candidate: string, query: string): number {
   const groups = expandSearchQuery(query)
   if (!value || groups.length === 0) return 0
   const tokens = value.split(' ')
+  const boundedValue = ` ${value} `
 
   let score = 0
   for (const alternatives of groups) {
@@ -84,6 +64,7 @@ export function scoreBilingualMatch(candidate: string, query: string): number {
       if (value === term) best = Math.max(best, 100)
       else if (tokens[0] === term) best = Math.max(best, 70)
       else if (tokens.includes(term)) best = Math.max(best, 50)
+      else if (term.includes(' ') && boundedValue.includes(` ${term} `)) best = Math.max(best, 50)
       // Un concetto tradotto deve coincidere con una parola intera: così
       // `mare`/`sea` non intercetta nomi tecnici come `seamless`.
       else if (alternatives.length === 1 && tokens.some((token) => token.startsWith(term))) {
