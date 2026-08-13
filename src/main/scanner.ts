@@ -1,11 +1,11 @@
 import type { DatabaseSync } from 'node:sqlite'
-import { readdirSync, statSync } from 'fs'
 import { readdir, stat } from 'fs/promises'
 import { join } from 'path'
 import { getDb } from './db/connection'
 import { mapFolder } from './db/mappers'
-import type { Folder, MediaKind } from '@shared/types'
-import { classifyMediaPath, MEDIA_MIME, mimeFromPath } from '@shared/media-formats'
+import type { Folder } from '@shared/types'
+import { MEDIA_MIME } from '@shared/media-formats'
+import { walkMedia } from './scanner-batch'
 
 /** Directory da ignorare sempre durante la scansione. */
 const BLACKLIST = new Set(['node_modules', '.git', '.svn', '.hg', 'CVS', '$RECYCLE.BIN'])
@@ -36,21 +36,14 @@ export async function scanRoot(rootId: number, db: DatabaseSync = getDb()): Prom
   const tree = await buildTree(root.path)
   const ts = now()
 
-  db.exec('BEGIN')
-  try {
-    insertTree(db, tree, rootId, ts)
-    // File multimediali per root + tutti i discendenti
-    const folders = getSelfAndDescendantFolders(db, rootId)
-    for (const f of folders) {
-      const count = scanFilesOfFolder(db, f.id, f.path, ts)
-      db.prepare('UPDATE folders SET file_count = ? WHERE id = ?').run(count, f.id)
-    }
-    db.prepare('UPDATE folders SET last_scanned_at = ? WHERE id = ?').run(ts, rootId)
-    db.exec('COMMIT')
-  } catch (e) {
-    db.exec('ROLLBACK')
-    throw e
+  insertTree(db, tree, rootId, ts)
+  // Ogni cartella usa transazioni corte; la scansione non blocca SQLite per l'intero albero.
+  const folders = getSelfAndDescendantFolders(db, rootId)
+  for (const f of folders) {
+    const count = await scanFilesOfFolder(db, f.id, f.path, ts)
+    db.prepare('UPDATE folders SET file_count = ? WHERE id = ?').run(count, f.id)
   }
+  db.prepare('UPDATE folders SET last_scanned_at = ? WHERE id = ?').run(ts, rootId)
 
   return getDescendants(db, rootId)
 }
@@ -99,15 +92,7 @@ function insertTree(db: DatabaseSync, nodes: TreeNode[], parentId: number, ts: n
 }
 
 /** Scopre i file multimediali di una cartella e fa upsert nella tabella files. */
-function scanFilesOfFolder(db: DatabaseSync, folderId: number, folderPath: string, ts: number): number {
-  let entries: string[]
-  try {
-    entries = readdirSync(folderPath)
-  } catch {
-    // Un errore temporaneo di permessi non deve cancellare dati già indicizzati.
-    const row = db.prepare('SELECT COUNT(*) AS count FROM files WHERE folder_id = ?').get(folderId) as { count: number }
-    return row.count
-  }
+async function scanFilesOfFolder(db: DatabaseSync, folderId: number, folderPath: string, ts: number): Promise<number> {
   const upsert = db.prepare(
     `INSERT INTO files (folder_id, path, name, kind, mime, size_bytes, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -121,21 +106,28 @@ function scanFilesOfFolder(db: DatabaseSync, folderId: number, folderPath: strin
   )
   const seenPaths = new Set<string>()
   let count = 0
-  for (const name of entries) {
-    if (name.startsWith('.')) continue
-    const kind: MediaKind | null = classifyMediaPath(name)
-    if (!kind) continue // solo media
-    const full = join(folderPath, name)
-    let st
+  let complete = false
+  for await (const batch of walkMedia(folderPath)) {
+    complete = batch.complete
+    if (batch.entries.length === 0) continue
+    db.exec('BEGIN IMMEDIATE')
     try {
-      st = statSync(full)
-    } catch {
-      continue
+      for (const entry of batch.entries) {
+        upsert.run(folderId, entry.path, entry.name, entry.kind, entry.mime, entry.sizeBytes, ts, ts)
+        seenPaths.add(entry.path)
+        count++
+      }
+      db.exec('COMMIT')
+    } catch (error) {
+      db.exec('ROLLBACK')
+      throw error
     }
-    if (!st.isFile()) continue
-    upsert.run(folderId, full, name, kind, mimeFromPath(name), st.size, ts, ts)
-    seenPaths.add(full)
-    count++
+  }
+
+  if (!complete) {
+    // Un errore temporaneo non deve cancellare dati già indicizzati.
+    const row = db.prepare('SELECT COUNT(*) AS count FROM files WHERE folder_id = ?').get(folderId) as { count: number }
+    return row.count
   }
 
   const indexed = db.prepare('SELECT id, path FROM files WHERE folder_id = ?').all(folderId) as {
