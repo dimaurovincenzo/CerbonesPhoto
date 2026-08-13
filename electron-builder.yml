@@ -1,5 +1,12 @@
 appId: com.cerbonesphoto.app
 productName: CerbonesPhoto
+electronUpdaterCompatibility: '>= 2.16'
+publish:
+  provider: github
+  owner: dimaurovincenzo
+  repo: CerbonesPhoto
+  channel: latest
+  releaseType: draft
 directories:
   buildResources: build
 asar: true
@@ -23,10 +30,11 @@ mac:
   category: public.app-category.utilities
   target:
     - target: dmg
-      # La dipendenza nativa Sharp deve essere installata per ogni architettura.
-      # Questa workstation produce e valida ARM64; x64 va costruito in una job dedicata.
       arch: [arm64]
-  artifactName: ${productName}-${version}-${arch}.${ext}
+    - target: zip
+      arch: [arm64]
+  # Il suffisso distingue lo ZIP consumato da Squirrel.Mac dal DMG per installazione manuale.
+  artifactName: ${productName}-${version}-${arch}-mac.${ext}
   darkModeSupport: true
   minimumSystemVersion: '12.0'
 dmg:

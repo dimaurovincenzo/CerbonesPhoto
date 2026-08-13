@@ -1,8 +1,12 @@
 {
-  "name": "cartelli",
+  "name": "cerbones-photo",
   "productName": "CerbonesPhoto",
   "version": "0.1.0",
   "description": "Organizzatore multimediale CerbonesPhoto per macOS",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dimaurovincenzo/CerbonesPhoto.git"
+  },
   "main": "./out/main/index.js",
   "author": "",
   "license": "MIT",
@@ -19,7 +23,8 @@
     "build:mac": "electron-vite build && electron-builder --mac",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
-    "typecheck": "npm run typecheck:node && npm run typecheck:web"
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "release:github": "node scripts/release-github.mjs"
   },
   "dependencies": {
     "electron-log": "5.4.4",

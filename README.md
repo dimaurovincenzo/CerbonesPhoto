@@ -19,6 +19,37 @@ npm test             # test unitari ricerca/formati/store
 npm run smoke        # avvio Electron e verifica automatica del renderer
 ```
 
+## Aggiornamenti
+
+Le build macOS pacchettizzate controllano il canale stabile delle GitHub Releases
+di `dimaurovincenzo/CerbonesPhoto`. Il controllo parte dopo l'avvio e ogni sei ore;
+la nuova versione viene scaricata in background, ma installazione e riavvio
+richiedono sempre una conferma esplicita.
+
+Gli errori di rete non bloccano catalogo, originali o workflow fotografico. Le
+build di sviluppo e gli smoke test non contattano il provider degli aggiornamenti.
+
+## Creare una release
+
+Il comando seguente funziona soltanto su macOS arm64, branch `main`, worktree
+pulita, versione SemVer coerente e remote GitHub atteso:
+
+```bash
+npm run release:github
+```
+
+Il comando esegue test, typecheck, build, verifica motori, firma, packaging DMG e
+ZIP, checksum e crea una GitHub Release in **bozza**. La bozza deve essere
+scaricata e verificata prima della promozione manuale: l'updater ignora bozze e
+prerelease.
+
+### Firma provvisoria
+
+Le prime build usano il certificato locale `Apple Development` e non sono
+notarizzate. Al primo avvio Gatekeeper può quindi richiedere un'autorizzazione
+manuale. Questa limitazione deve rimanere visibile nelle note della release fino
+alla migrazione a `Developer ID Application` e notarizzazione Apple.
+
 ## Architettura
 
 - **Main process** (`src/main`): finestra, DB SQLite, scanner filesystem, thumbnail, protocollo media, IPC
