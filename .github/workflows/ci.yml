@@ -19,6 +19,7 @@ jobs:
           node-version: '24.19.0'
           cache: npm
       - run: npm ci
+      - run: npm run fixtures:raw -- --download
       - run: npm test
       - run: npm run typecheck
       - run: npm run build

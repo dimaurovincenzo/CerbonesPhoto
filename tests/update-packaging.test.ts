@@ -16,6 +16,7 @@ test('il packaging produce un canale GitHub aggiornabile arm64 in bozza', () => 
   const builder = yaml.load(readFileSync(new URL('../electron-builder.yml', import.meta.url), 'utf8')) as BuilderConfig
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
   const releaseScript = readFileSync(new URL('../scripts/release-github.mjs', import.meta.url), 'utf8')
+  const workflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8')
 
   assert.equal(builder.appId, 'com.cerbonesphoto.app')
   assert.equal(builder.productName, 'CerbonesPhoto')
@@ -32,4 +33,5 @@ test('il packaging produce un canale GitHub aggiornabile arm64 in bozza', () => 
   assert.equal(pkg.repository.url, 'https://github.com/dimaurovincenzo/CerbonesPhoto.git')
   assert.match(releaseScript, /findLiteralSecrets/)
   assert.match(releaseScript, /app\.asar/)
+  assert.match(workflow, /npm run fixtures:raw -- --download\s+?- run: npm test/s)
 })
