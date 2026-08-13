@@ -3,8 +3,10 @@ import { createReadStream } from 'node:fs'
 import { statSync } from 'node:fs'
 import { Readable } from 'node:stream'
 import { getDb } from './db/connection'
-import { getThumbnailPath } from './thumbnails'
 import { mimeFromPath } from '@shared/media-formats'
+import type { PhotoRuntime } from './photo/photo-runtime'
+import type { DerivativeLevel } from '@shared/photo-types'
+import { createPhotoProtocolResponse, parseIndexedMediaUrl, type PhotoProtocolDatabase } from './media-protocol-photo'
 
 /**
  * Protocolli custom per servire i media al renderer:
@@ -25,49 +27,46 @@ export function registerPrivilegedSchemes(): void {
     {
       scheme: 'media',
       privileges: { standard: false, supportFetchAPI: true, stream: true, bypassCSP: false }
+    },
+    {
+      scheme: 'preview',
+      privileges: { standard: false, supportFetchAPI: true, stream: false, bypassCSP: false }
     }
   ])
 }
 
 /** Da registrare DOPO app.ready (protocol.handle). */
-export function registerMediaProtocols(): void {
+export function registerMediaProtocols(photoRuntime: PhotoRuntime): void {
+  const photoDatabase: PhotoProtocolDatabase = {
+    file: (fileId) => getDb().prepare(
+      'SELECT id, kind, processing_state, processing_error_code FROM files WHERE id = ?'
+    ).get(fileId) as ReturnType<PhotoProtocolDatabase['file']>,
+    derivative: (fileId, level) => getDb().prepare(
+      "SELECT path, mime FROM file_derivatives WHERE file_id = ? AND level = ? AND status = 'ready'"
+    ).get(fileId, level) as ReturnType<PhotoProtocolDatabase['derivative']>
+  }
+  const requestDerivative = (fileId: number, level: DerivativeLevel): void => {
+    if (level === 'thumbnail' || level === 'preview') photoRuntime.pipeline.enqueue(fileId, 1000)
+    else photoRuntime.requestDerivative(fileId, level)
+  }
+
   // Thumbnail webp per le immagini.
   protocol.handle('thumb', async (request) => {
-    const url = new URL(request.url)
-    const match = url.pathname.match(/^\/file\/(\d+)$/)
-    if (!match) return new Response('Bad request', { status: 400 })
-
-    const fileId = Number(match[1])
-    const row = getDb().prepare('SELECT path, kind FROM files WHERE id = ?').get(fileId) as
-      | { path: string; kind: string }
-      | undefined
-    if (!row) return new Response('Not found', { status: 404 })
-    if (row.kind !== 'image') return new Response('Not an image', { status: 404 })
-
-    try {
-      const thumbPath = await getThumbnailPath(row.path)
-      const { readFile } = await import('node:fs/promises')
-      const data = await readFile(thumbPath)
-      return new Response(new Uint8Array(data), {
-        status: 200,
-        headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'public, max-age=86400' }
-      })
-    } catch {
-      return new Response('Thumbnail error', { status: 500 })
-    }
+    return createPhotoProtocolResponse(request, photoDatabase, 'thumbnail', requestDerivative)
   })
+
+  protocol.handle('preview', (request) => createPhotoProtocolResponse(request, photoDatabase, undefined, requestDerivative))
 
   // File raw con HTTP Range (per lo scrubbing audio e le immagini full-size).
   protocol.handle('media', async (request) => {
-    const url = new URL(request.url)
-    const match = url.pathname.match(/^\/file\/(\d+)$/)
-    if (!match) return new Response('Bad request', { status: 400 })
+    const parsed = parseIndexedMediaUrl(request.url)
+    if (!parsed) return new Response('Bad request', { status: 400 })
 
-    const fileId = Number(match[1])
-    const row = getDb().prepare('SELECT path FROM files WHERE id = ?').get(fileId) as
-      | { path: string }
+    const row = getDb().prepare('SELECT path, is_raw FROM files WHERE id = ?').get(parsed.fileId) as
+      | { path: string; is_raw: number }
       | undefined
     if (!row) return new Response('Not found', { status: 404 })
+    if (row.is_raw === 1) return new Response('RAW requires a generated preview', { status: 415 })
 
     let size: number
     try {

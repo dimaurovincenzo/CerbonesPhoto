@@ -11,6 +11,7 @@ import {
   SqlitePhotoRepository
 } from './photo-pipeline.ts'
 import { RawHelper } from './raw-helper.ts'
+import { PhotoQueue } from './photo-queue.ts'
 
 export interface PhotoRuntimeOptions {
   db: DatabaseSync
@@ -28,6 +29,7 @@ export class PhotoRuntime {
   private readonly repository: SqlitePhotoRepository
   private readonly exifTool: ExifToolService
   private readonly rawHelper: RawHelper
+  private readonly demandQueue = new PhotoQueue({ ioConcurrency: 4, rawConcurrency: 1 })
 
   constructor(options: PhotoRuntimeOptions) {
     this.db = options.db
@@ -62,6 +64,19 @@ export class PhotoRuntime {
     return record
   }
 
+  requestDerivative(fileId: number, level: DerivativeLevel): boolean {
+    const file = this.repository.getFile(fileId)
+    if (!file || file.kind !== 'image') return false
+    return this.demandQueue.enqueue({
+      id: `derivative:${fileId}:${level}`,
+      fileId,
+      kind: level,
+      priority: 1000,
+      resource: file.isRaw ? 'raw' : 'io',
+      run: async (signal) => { await this.ensureDerivative(fileId, level, signal) }
+    })
+  }
+
   async engines(): Promise<PhotoEngineHealth[]> {
     const [exifTool, libraw] = await Promise.all([this.exifTool.health(), this.rawHelper.health()])
     return [
@@ -78,7 +93,7 @@ export class PhotoRuntime {
   }
 
   async shutdown(): Promise<void> {
-    await this.pipeline.shutdown()
+    await Promise.all([this.pipeline.shutdown(), this.demandQueue.shutdown()])
     await this.exifTool.close()
   }
 }

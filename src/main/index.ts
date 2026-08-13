@@ -235,7 +235,7 @@ app.whenReady().then(() => {
   // 2. Handler IPC (folder/files/tags/categories/settings/dialogs)
   registerIpc(photoRuntime)
   // 3. Protocolli media (thumb://, media://)
-  registerMediaProtocols()
+  registerMediaProtocols(photoRuntime)
   // 4. Menu applicazione
   setupAppMenu()
   // 5. Finestra
