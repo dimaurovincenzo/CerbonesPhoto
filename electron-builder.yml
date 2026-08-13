@@ -1,0 +1,32 @@
+appId: com.cerbonesphoto.app
+productName: CerbonesPhoto
+directories:
+  buildResources: build
+asar: true
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+mac:
+  icon: build/icon.icns
+  category: public.app-category.utilities
+  target:
+    - target: dmg
+      # La dipendenza nativa Sharp deve essere installata per ogni architettura.
+      # Questa workstation produce e valida ARM64; x64 va costruito in una job dedicata.
+      arch: [arm64]
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  darkModeSupport: true
+dmg:
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+npmRebuild: false
