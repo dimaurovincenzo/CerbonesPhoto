@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, FileAudio, FileImage, FileVideo, LoaderCircle, RotateCcw } from 'lucide-react'
 import type { MediaFile } from '@shared/types'
 import { usePhotoPipelineStore } from '@renderer/stores/photo-pipeline'
+import { mediaCardActivation } from './media-card-actions'
 
 interface Props {
   file: MediaFile
@@ -43,8 +44,13 @@ export function MediaCard({ file, onSelect, onVisibilityChange }: Props): React.
       <button
         type="button"
         className="media-card__primary"
-        onClick={() => onSelect?.(file)}
-        onDoubleClick={() => void window.cartelli.files.open(file.id)}
+        onClick={(event) => {
+          if (mediaCardActivation(event.detail) === 'select') onSelect?.(file)
+        }}
+        onDoubleClick={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+        }}
       >
         <div className="media-card__thumb">
           {isImage && !thumbnailError ? (
