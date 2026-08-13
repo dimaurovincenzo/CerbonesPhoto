@@ -3,6 +3,14 @@ productName: CerbonesPhoto
 directories:
   buildResources: build
 asar: true
+asarUnpack:
+  - node_modules/exiftool-vendored.pl/**
+  - node_modules/exiftool-vendored/**
+extraResources:
+  - from: resources/bin/darwin-arm64
+    to: bin/darwin-arm64
+  - from: resources/licenses
+    to: licenses
 files:
   - '!**/.vscode/*'
   - '!src/*'
@@ -20,6 +28,7 @@ mac:
       arch: [arm64]
   artifactName: ${productName}-${version}-${arch}.${ext}
   darkModeSupport: true
+  minimumSystemVersion: '12.0'
 dmg:
   artifactName: ${productName}-${version}-${arch}.${ext}
   contents:
