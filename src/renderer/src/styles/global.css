@@ -1853,6 +1853,54 @@ button:disabled { cursor: default; }
   font-size: 11px;
 }
 .about-dialog__version:hover { background: var(--bg-hover); color: var(--text-primary); }
+.update-status {
+  position: relative;
+  width: 100%;
+  min-height: 32px;
+  margin-top: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  font-size: 10px;
+  overflow: hidden;
+}
+.update-status__label { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.update-status__label svg { flex: 0 0 auto; }
+.update-status__action,
+.update-status__install {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--accent);
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+}
+.update-status__action:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.update-status__install { color: #fff; background: var(--accent); }
+.update-status__install:hover { background: var(--accent-hover); }
+.update-status__progress {
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.update-status__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 160ms ease;
+}
+.update-status .is-spinning { animation: update-spin 900ms linear infinite; }
+@keyframes update-spin { to { transform: rotate(360deg); } }
 .about-dialog__tagline { margin-top: 12px; color: var(--text-secondary); text-align: center; }
 .about-engines {
   width: 100%;

@@ -215,6 +215,8 @@ function createWindow(): void {
           for (const key of 'CERBONE') aboutDialog?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
           await new Promise((done) => requestAnimationFrame(() => done()))
           const polaroidJoke = document.body.innerText.includes('Foto approvata dal cognato. Nessun RAW è stato maltrattato.')
+          const updateStatus = Boolean(aboutDialog?.querySelector('.update-status')) &&
+            document.body.innerText.includes('Aggiornamenti non disponibili in questa build')
           aboutDialog?.querySelector('.about-dialog__close')?.click()
 
           const inspectorButton = document.querySelector('[aria-label="Mostra o nascondi informazioni"]')
@@ -243,6 +245,7 @@ function createWindow(): void {
             progressivePreview,
             photoControls: !pausedBefore.paused && pausedDuring.paused && !pausedAfter.paused,
             about: Boolean(aboutDialog) && lensJoke && versionJoke && polaroidJoke,
+            updateStatus,
             signature: document.body.innerText.includes('Powered by VDM with love — Cerbone Antonio'),
             inspectorHidden,
             noTechnicalPaths: !document.body.innerText.includes('/tmp/cartelli-smoke-media'),
@@ -259,12 +262,12 @@ function createWindow(): void {
         })))
       `).then(async (state: {
         shell: boolean; fatal: boolean; title: string; bilingual: boolean; filters: boolean
-        lightboxOpened: boolean; zoomWorks: boolean; progressivePreview: boolean; photoControls: boolean; about: boolean; signature: boolean
+        lightboxOpened: boolean; zoomWorks: boolean; progressivePreview: boolean; photoControls: boolean; about: boolean; updateStatus: boolean; signature: boolean
         inspectorHidden: boolean; noTechnicalPaths: boolean; labels: boolean; markerOrder: boolean
         resizable: boolean; tabs: boolean; noPageOverflow: boolean
       }) => {
         if (!state.shell || state.fatal || !state.bilingual || !state.filters ||
-            !state.lightboxOpened || !state.zoomWorks || !state.progressivePreview || !state.photoControls || !state.about || !state.signature ||
+            !state.lightboxOpened || !state.zoomWorks || !state.progressivePreview || !state.photoControls || !state.about || !state.updateStatus || !state.signature ||
             !state.inspectorHidden || !state.noTechnicalPaths ||
             !state.labels || !state.markerOrder || !state.resizable || !state.tabs || !state.noPageOverflow) {
           throw new Error(`Renderer non valido: ${JSON.stringify(state)}`)

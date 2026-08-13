@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle } from 'lucide-react'
 import iconUrl from '../../../../build/icon.png'
 import type { PhotoEngineHealth } from '@shared/photo-types'
 import { useAboutStore } from '../stores/about'
+import { UpdateStatus } from './UpdateStatus'
 
 export function AboutCerbonesPhoto(): React.JSX.Element | null {
   const isOpen = useAboutStore((state) => state.isOpen)
@@ -57,6 +58,7 @@ export function AboutCerbonesPhoto(): React.JSX.Element | null {
         >
           Versione {window.cartelli.app.version}
         </button>
+        <UpdateStatus />
         <p className="about-dialog__tagline">Catalogo fotografico privato. Originali sempre intatti.</p>
 
         <div className="about-engines" aria-label="Stato motori fotografici">
