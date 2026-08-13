@@ -12,6 +12,7 @@
     "smoke": "CARTELLI_SMOKE=1 electron-vite dev",
     "build:raw-helper": "bash scripts/build-raw-helper.sh",
     "verify:photo-engines": "node scripts/verify-photo-engines.mjs",
+    "fixtures:raw": "node scripts/fetch-raw-fixtures.mjs --download",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",

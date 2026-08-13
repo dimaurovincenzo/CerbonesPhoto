@@ -12,9 +12,14 @@ interface RawAdapter {
   render(sourcePath: string, outputPath: string, signal: AbortSignal): Promise<void>
 }
 
+interface StandardImageAdapter {
+  convertToTiff(sourcePath: string, outputPath: string, signal: AbortSignal): Promise<void>
+}
+
 export interface DerivativeServiceOptions {
   cache: PhotoCache
   rawHelper?: RawAdapter
+  standardFallback?: StandardImageAdapter
 }
 
 const MAX_SIDE: Record<DerivativeLevel, number> = {
@@ -27,10 +32,12 @@ const MAX_SIDE: Record<DerivativeLevel, number> = {
 export class DerivativeService {
   private readonly cache: PhotoCache
   private readonly rawHelper?: RawAdapter
+  private readonly standardFallback?: StandardImageAdapter
 
   constructor(options: DerivativeServiceOptions) {
     this.cache = options.cache
     this.rawHelper = options.rawHelper
+    this.standardFallback = options.standardFallback
   }
 
   async ensure(file: MediaFile, level: DerivativeLevel, signal: AbortSignal): Promise<DerivativeRecord> {
@@ -68,28 +75,35 @@ export class DerivativeService {
   private async generate(file: MediaFile, level: DerivativeLevel, outputPath: string, signal: AbortSignal): Promise<void> {
     const partialPath = `${outputPath}.partial-${process.pid}-${randomUUID()}`
     let processingInput = file.path
-    let rawWorkspace: string | null = null
+    let inputWorkspace: string | null = null
     try {
       if (file.isRaw) {
         if (!this.rawHelper) throw new RawHelperError('RAW_UNSUPPORTED', 'Motore RAW non disponibile')
-        rawWorkspace = await mkdtemp(join(this.cache.rootPath, '.raw-source-'))
-        processingInput = join(rawWorkspace, 'source-preview')
+        inputWorkspace = await mkdtemp(join(this.cache.rootPath, '.raw-source-'))
+        processingInput = join(inputWorkspace, 'source-preview')
         try {
           await this.rawHelper.extractPreview(file.path, processingInput, signal)
+          // Alcune fotocamere incorporano PPM/JXL che il build corrente di libvips
+          // può non decodificare: validare qui evita un errore tardivo e abilita il render RAW.
+          await sharp(processingInput).metadata()
         } catch (error) {
           if (isAbortError(error)) throw error
-          processingInput = join(rawWorkspace, 'source-render.tiff')
+          processingInput = join(inputWorkspace, 'source-render.tiff')
           await this.rawHelper.render(file.path, processingInput, signal)
         }
       }
 
       throwIfAborted(signal)
-      await sharp(processingInput, { limitInputPixels: 268_402_689, sequentialRead: true })
-        .autoOrient()
-        .resize(MAX_SIDE[level], MAX_SIDE[level], { fit: 'inside', withoutEnlargement: true })
-        .withIccProfile('srgb')
-        .webp({ quality: level === 'thumbnail' ? 82 : 90, effort: 4 })
-        .toFile(partialPath)
+      try {
+        await writeWebp(processingInput, partialPath, level)
+      } catch (error) {
+        if (file.isRaw || !this.standardFallback || isAbortError(error)) throw error
+        await unlink(partialPath).catch(() => undefined)
+        inputWorkspace = await mkdtemp(join(this.cache.rootPath, '.standard-source-'))
+        processingInput = join(inputWorkspace, 'imageio-source.tiff')
+        await this.standardFallback.convertToTiff(file.path, processingInput, signal)
+        await writeWebp(processingInput, partialPath, level)
+      }
       throwIfAborted(signal)
 
       // L'hard-link è un publish atomico che non sovrascrive un derivato creato in parallelo.
@@ -100,7 +114,7 @@ export class DerivativeService {
       }
     } finally {
       await unlink(partialPath).catch(() => undefined)
-      if (rawWorkspace) await rm(rawWorkspace, { recursive: true, force: true })
+      if (inputWorkspace) await rm(inputWorkspace, { recursive: true, force: true })
     }
   }
 }
@@ -120,4 +134,13 @@ async function isReadableFile(path: string): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+async function writeWebp(inputPath: string, outputPath: string, level: DerivativeLevel): Promise<void> {
+  await sharp(inputPath, { limitInputPixels: 268_402_689, sequentialRead: true })
+    .autoOrient()
+    .resize(MAX_SIDE[level], MAX_SIDE[level], { fit: 'inside', withoutEnlargement: true })
+    .withIccProfile('srgb')
+    .webp({ quality: level === 'thumbnail' ? 82 : 90, effort: 4 })
+    .toFile(outputPath)
 }

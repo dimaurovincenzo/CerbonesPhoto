@@ -51,7 +51,7 @@ function keywords(...values: unknown[]): string[] {
 export function normalizePhotoMetadata(tags: Record<string, unknown>): PhotoMetadata {
   return {
     cameraMake: text(first(tags, 'EXIF:Make', 'Make')),
-    cameraModel: text(first(tags, 'EXIF:Model', 'Model')),
+    cameraModel: text(first(tags, 'EXIF:Model', 'EXIF:UniqueCameraModel', 'UniqueCameraModel', 'Model')),
     lens: text(first(tags, 'EXIF:LensModel', 'Composite:LensID', 'LensModel')),
     capturedAt: dateTime(first(tags, 'EXIF:DateTimeOriginal', 'XMP:DateCreated', 'DateTimeOriginal')),
     width: finiteNumber(first(tags, 'EXIF:ImageWidth', 'File:ImageWidth', 'ImageWidth')),

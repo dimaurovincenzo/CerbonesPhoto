@@ -1,0 +1,92 @@
+[
+  {
+    "file": "samples/Canon-EOS-40D-sRAW2-sRAW-3-2.cr2",
+    "sha256": "ba644e7dd2abe74eca260e67f0206ff113bf0f62e710f8130611e964d6be5bf1",
+    "vendor": "Canon",
+    "cameraModel": "EOS 40D",
+    "format": "cr2",
+    "sourceUrl": "https://raw.pixls.us/getfile.php/2102/nice/Canon - EOS 40D - sRAW2 (sRAW) (3:2).CR2",
+    "license": "CC0-1.0",
+    "expectedOutcome": "ready"
+  },
+  {
+    "file": "samples/Canon-EOS-R6-3-2.cr3",
+    "sha256": "74abb0a113d075ad9887a058082f40dd2a938c4813a08474d82356f11a027778",
+    "vendor": "Canon",
+    "cameraModel": "EOS R6",
+    "format": "cr3",
+    "sourceUrl": "https://raw.pixls.us/getfile.php/4659/nice/Canon - EOS R6 - 3:2.CR3",
+    "license": "CC0-1.0",
+    "expectedOutcome": "ready"
+  },
+  {
+    "file": "samples/Nikon-Nikon-COOLSCAN-IV-ED-uncompressed-4-3.nef",
+    "sha256": "268d9a98920a9f3ea3ebf6a2b9ff68b956df74ac0e46b980bee69e7ef3ebc172",
+    "vendor": "Nikon",
+    "cameraModel": "Nikon COOLSCAN IV ED",
+    "format": "nef",
+    "sourceUrl": "https://raw.pixls.us/getfile.php/4282/nice/Nikon - Nikon COOLSCAN IV ED - uncompressed (4:3).nef",
+    "license": "CC0-1.0",
+    "expectedOutcome": "ready"
+  },
+  {
+    "file": "samples/Sony-ILCE-7S-14bit-14bit-compressed-3-2.arw",
+    "sha256": "a35ebb2fbec929daa5beb20d1ce5c15a8aac7b1a7a231455387f3df8a7442e07",
+    "vendor": "Sony",
+    "cameraModel": "ILCE-7S",
+    "format": "arw",
+    "sourceUrl": "https://raw.pixls.us/getfile.php/1582/nice/Sony - ILCE-7S - 14bit 14bit compressed (3:2).ARW",
+    "license": "CC0-1.0",
+    "expectedOutcome": "ready"
+  },
+  {
+    "file": "samples/Fujifilm-FinePix-S5000-4-3.raf",
+    "sha256": "dabd5e74521a6980156be9fd4b88d0c37b0fe4d0e0e6f5c12db8cffff1b76297",
+    "vendor": "Fujifilm",
+    "cameraModel": "FinePix S5000",
+    "format": "raf",
+    "sourceUrl": "https://raw.pixls.us/getfile.php/2726/nice/Fujifilm - FinePix S5000 - 4:3.RAF",
+    "license": "CC0-1.0",
+    "expectedOutcome": "ready"
+  },
+  {
+    "file": "samples/Olympus-E-10-16bit-4-3.orf",
+    "sha256": "2bfdade72439017a60a47aad1e5bbcb1aca36f2be7a21e94a4257a678fb6f4da",
+    "vendor": "Olympus",
+    "cameraModel": "E-10",
+    "format": "orf",
+    "sourceUrl": "https://raw.pixls.us/getfile.php/5424/nice/Olympus - E-10 - 16bit (4:3).ORF",
+    "license": "CC0-1.0",
+    "expectedOutcome": "ready"
+  },
+  {
+    "file": "samples/Panasonic-DMC-LX7-1-1.rw2",
+    "sha256": "d142a23aca836053ed53e9ce3cb3ed2d434541d734d71a94a6eefadcd08bd31b",
+    "vendor": "Panasonic",
+    "cameraModel": "DMC-LX7",
+    "format": "rw2",
+    "sourceUrl": "https://raw.pixls.us/getfile.php/7008/nice/Panasonic - DMC-LX7 - 1:1.RW2",
+    "license": "CC0-1.0",
+    "expectedOutcome": "ready"
+  },
+  {
+    "file": "samples/Blackmagic-Micro-Cinema-Camera-12bit-16-9.dng",
+    "sha256": "4c65b8cda205087cfb94d8931811e53e15eb4df538ad67c1b4a3e76c1185b277",
+    "vendor": "Blackmagic",
+    "cameraModel": "Micro Cinema Camera",
+    "format": "dng",
+    "sourceUrl": "https://raw.pixls.us/getfile.php/7317/nice/Blackmagic - Micro Cinema Camera - 12bit (16:9).dng",
+    "license": "CC0-1.0",
+    "expectedOutcome": "ready"
+  },
+  {
+    "file": "samples/Pentax-K10D-12bit-12bit-compressed-3-2.pef",
+    "sha256": "e35ae4154a468be3154f5f462e884ba5941f010d3e8f23d347fbec14809f44d3",
+    "vendor": "Pentax",
+    "cameraModel": "K10D",
+    "format": "pef",
+    "sourceUrl": "https://raw.pixls.us/getfile.php/2239/nice/Pentax - K10D - 12bit 12bit compressed (3:2).PEF",
+    "license": "CC0-1.0",
+    "expectedOutcome": "ready"
+  }
+]

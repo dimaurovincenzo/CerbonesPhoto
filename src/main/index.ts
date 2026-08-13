@@ -1,6 +1,6 @@
 import { app, shell, BrowserWindow, dialog, nativeTheme } from 'electron'
 import { join } from 'path'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { closeDb, getDb, openDb } from './db/connection'
 import { runMigrations } from './db/migrations'
@@ -28,14 +28,29 @@ let shutdownStarted = false
 function seedSmokeData(): void {
   const db = getDb()
   const ts = Date.now()
+  const mediaDirectory = join(app.getPath('userData'), 'smoke-media')
+  mkdirSync(mediaDirectory, { recursive: true })
+  const photoPath = join(mediaDirectory, 'Cerbone portrait.svg')
+  const videoPath = join(mediaDirectory, 'Summer sea sunset.mov')
+  writeFileSync(photoPath, `
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff9f0a"/><stop offset="1" stop-color="#1c1c1e"/></linearGradient></defs>
+      <rect width="1200" height="800" fill="url(#g)"/><circle cx="600" cy="400" r="230" fill="none" stroke="#fff" stroke-width="36"/>
+      <circle cx="600" cy="400" r="82" fill="#fff"/><text x="600" y="735" text-anchor="middle" fill="#fff" font-size="58" font-family="sans-serif">CerbonesPhoto</text>
+    </svg>`)
   const root = db.prepare(
     `INSERT INTO folders (path, name, is_root, file_count, created_at, updated_at)
-     VALUES (?, ?, 1, 1, ?, ?)`
-  ).run('/tmp/cartelli-smoke-media', 'Smoke media', ts, ts)
+     VALUES (?, ?, 1, 2, ?, ?)`
+  ).run(mediaDirectory, 'Smoke media', ts, ts)
   db.prepare(
     `INSERT INTO files (folder_id, path, name, kind, mime, created_at, updated_at)
      VALUES (?, ?, ?, 'video', 'video/quicktime', ?, ?)`
-  ).run(root.lastInsertRowid, '/tmp/cartelli-smoke-media/Summer sea sunset.mov', 'Summer sea sunset.mov', ts, ts)
+  ).run(root.lastInsertRowid, videoPath, 'Summer sea sunset.mov', ts, ts)
+  db.prepare(
+    `INSERT INTO files
+     (folder_id, path, name, kind, mime, size_bytes, source_mtime_ms, photo_format, is_raw, created_at, updated_at)
+     VALUES (?, ?, ?, 'image', 'image/svg+xml', ?, ?, 'svg', 0, ?, ?)`
+  ).run(root.lastInsertRowid, photoPath, 'Cerbone portrait.svg', 512, ts, ts, ts)
   const tag = db.prepare(
     `INSERT INTO tags (name, color, sort_order, created_at) VALUES ('Preferiti', '#ff9f0a', 0, ?)`
   ).run(ts)
@@ -108,6 +123,7 @@ function createWindow(): void {
 
   if (process.env['CARTELLI_SMOKE'] === '1') {
     mainWindow.webContents.once('did-finish-load', () => {
+      mainWindow.webContents.send('cartelli:menu-action', 'show-about')
       void mainWindow.webContents.executeJavaScript(`
         new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(async () => {
           const waitFor = async (selector, timeout = 3000) => {
@@ -142,14 +158,44 @@ function createWindow(): void {
             window.cartelli.folders.getCategories(rootFolder.id)
           ])
           const mediaCard = await waitFor('.media-card')
+          const imageCard = await waitFor('.media-card--image')
+          imageCard?.querySelector('.media-card__primary')?.click()
+          const zoomable = await waitFor('.zoomable-photo')
+          const previewStarted = Date.now()
+          while (Date.now() - previewStarted < 4000 && !zoomable?.querySelector('img')?.src.startsWith('blob:')) {
+            await new Promise((done) => setTimeout(done, 50))
+          }
+          const progressivePreview = Boolean(zoomable?.querySelector('img')?.src.startsWith('blob:'))
+          const zoomIn = zoomable?.querySelector('[aria-label="Aumenta zoom"]')
+          zoomIn?.click()
+          await new Promise((done) => requestAnimationFrame(() => done()))
+          const zoomWorks = zoomable?.querySelector('.zoomable-photo__scale')?.textContent !== '100%'
+          const photoLightboxOpened = Boolean(document.querySelector('.lightbox'))
+          document.querySelector('.lightbox__close')?.click()
+
           const filterButtons = [...document.querySelectorAll('.media-filterbar .segmented-control button')]
           const videoFilter = filterButtons.find((button) => button.textContent?.trim() === 'Video')
           videoFilter?.click()
           await new Promise((done) => requestAnimationFrame(() => done()))
-          mediaCard?.click()
+
+          const pausedBefore = await window.cartelli.photo.snapshot()
+          await window.cartelli.photo.pause()
+          const pausedDuring = await window.cartelli.photo.snapshot()
+          await window.cartelli.photo.resume()
+          const pausedAfter = await window.cartelli.photo.snapshot()
+
+          const aboutDialog = await waitFor('.about-dialog')
+          const aboutLens = aboutDialog?.querySelector('.about-dialog__lens')
+          for (let index = 0; index < 5; index++) aboutLens?.click()
           await new Promise((done) => requestAnimationFrame(() => done()))
-          const lightboxOpened = Boolean(document.querySelector('.lightbox'))
-          document.querySelector('.lightbox__close')?.click()
+          const lensJoke = document.body.innerText.includes('Il fotografo sostiene che fosse tutto perfettamente a fuoco.')
+          aboutDialog?.querySelector('.about-dialog__version')?.dispatchEvent(new MouseEvent('click', { bubbles: true, altKey: true }))
+          await new Promise((done) => requestAnimationFrame(() => done()))
+          const versionJoke = document.body.innerText.includes('Versione sviluppata con amore. I bug, invece, sono venuti senza invito.')
+          for (const key of 'CERBONE') aboutDialog?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+          await new Promise((done) => requestAnimationFrame(() => done()))
+          const polaroidJoke = document.body.innerText.includes('Foto approvata dal cognato. Nessun RAW è stato maltrattato.')
+          aboutDialog?.querySelector('.about-dialog__close')?.click()
 
           const inspectorButton = document.querySelector('[aria-label="Mostra o nascondi informazioni"]')
           inspectorButton?.click()
@@ -172,7 +218,12 @@ function createWindow(): void {
             title: document.title,
             bilingual: italian.length === 1 && english.length === 1 && italian[0].id === english[0].id,
             filters: filterButtons.length === 4 && videoFilter?.classList.contains('is-selected'),
-            lightboxOpened,
+            lightboxOpened: photoLightboxOpened,
+            zoomWorks,
+            progressivePreview,
+            photoControls: !pausedBefore.paused && pausedDuring.paused && !pausedAfter.paused,
+            about: Boolean(aboutDialog) && lensJoke && versionJoke && polaroidJoke,
+            signature: document.body.innerText.includes('Powered by VDM with love — Cerbone Antonio'),
             inspectorHidden,
             noTechnicalPaths: !document.body.innerText.includes('/tmp/cartelli-smoke-media'),
             labels: assignedTags.some((tag) => tag.id === smokeTag.id) &&
@@ -188,11 +239,13 @@ function createWindow(): void {
         })))
       `).then(async (state: {
         shell: boolean; fatal: boolean; title: string; bilingual: boolean; filters: boolean
-        lightboxOpened: boolean; inspectorHidden: boolean; noTechnicalPaths: boolean
-        labels: boolean; markerOrder: boolean; resizable: boolean; tabs: boolean; noPageOverflow: boolean
+        lightboxOpened: boolean; zoomWorks: boolean; progressivePreview: boolean; photoControls: boolean; about: boolean; signature: boolean
+        inspectorHidden: boolean; noTechnicalPaths: boolean; labels: boolean; markerOrder: boolean
+        resizable: boolean; tabs: boolean; noPageOverflow: boolean
       }) => {
         if (!state.shell || state.fatal || !state.bilingual || !state.filters ||
-            !state.lightboxOpened || !state.inspectorHidden || !state.noTechnicalPaths ||
+            !state.lightboxOpened || !state.zoomWorks || !state.progressivePreview || !state.photoControls || !state.about || !state.signature ||
+            !state.inspectorHidden || !state.noTechnicalPaths ||
             !state.labels || !state.markerOrder || !state.resizable || !state.tabs || !state.noPageOverflow) {
           throw new Error(`Renderer non valido: ${JSON.stringify(state)}`)
         }
@@ -209,6 +262,30 @@ function createWindow(): void {
             const image = await mainWindow.webContents.capturePage()
             writeFileSync(join(screenshotDirectory, `cerbonesphoto-${width}x${height}.png`), image.toPNG())
           }
+          mainWindow.setSize(1180, 720)
+          await mainWindow.webContents.executeJavaScript(`
+            (() => {
+              const photoFilter = [...document.querySelectorAll('.media-filterbar .segmented-control button')]
+                .find((button) => button.textContent?.trim() === 'Foto')
+              photoFilter?.click()
+              return new Promise((resolve) => requestAnimationFrame(() => {
+                document.querySelector('.media-card--image .media-card__primary')?.click()
+                requestAnimationFrame(() => resolve(true))
+              }))
+            })()
+          `)
+          await new Promise((done) => setTimeout(done, 180))
+          const lightboxImage = await mainWindow.webContents.capturePage()
+          writeFileSync(join(screenshotDirectory, 'cerbonesphoto-lightbox-1180x720.png'), lightboxImage.toPNG())
+          await mainWindow.webContents.executeJavaScript(`document.querySelector('.lightbox__close')?.click()`)
+          await new Promise((done) => setTimeout(done, 120))
+
+          mainWindow.setSize(900, 600)
+          mainWindow.webContents.send('cartelli:menu-action', 'show-about')
+          await new Promise((done) => setTimeout(done, 180))
+          const aboutImage = await mainWindow.webContents.capturePage()
+          writeFileSync(join(screenshotDirectory, 'cerbonesphoto-about-900x600.png'), aboutImage.toPNG())
+          await mainWindow.webContents.executeJavaScript(`document.querySelector('.about-dialog__close')?.click()`)
         }
         console.log(`[smoke] READY ${JSON.stringify(state)}`)
         if (process.env['CARTELLI_SMOKE_HOLD'] !== '1') app.quit()

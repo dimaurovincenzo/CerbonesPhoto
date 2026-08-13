@@ -82,3 +82,46 @@ test('se il RAW non ha preview incorporata usa il render temporaneo', async (t) 
   assert.equal(result.width <= 480 && result.height <= 480, true)
   assert.equal((await readFile(source)).toString(), 'raw-originale')
 })
+
+test('se la preview RAW estratta non è decodificabile passa al render', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'cerbonesphoto-raw-invalid-preview-'))
+  t.after(() => rm(directory, { recursive: true, force: true }))
+  const source = join(directory, 'originale.nef')
+  await writeFile(source, 'raw-originale')
+  let renders = 0
+  const rawHelper = {
+    extractPreview: async (_source: string, output: string): Promise<void> => writeFile(output, 'formato embedded non supportato'),
+    render: async (_source: string, output: string): Promise<void> => {
+      renders += 1
+      await sharp({ create: { width: 640, height: 480, channels: 3, background: '#223344' } }).tiff().toFile(output)
+    }
+  }
+  const service = new DerivativeService({ cache: new PhotoCache(join(directory, 'cache')), rawHelper })
+
+  await service.ensure(mediaFile(source, true), 'thumbnail', new AbortController().signal)
+
+  assert.equal(renders, 1)
+})
+
+test('usa ImageIO per uno standard non decodificabile da Sharp', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'cerbonesphoto-standard-fallback-'))
+  t.after(() => rm(directory, { recursive: true, force: true }))
+  const source = join(directory, 'originale.heic')
+  await writeFile(source, 'contenitore-heic-fake')
+  let conversions = 0
+  const standardFallback = {
+    convertToTiff: async (_source: string, output: string): Promise<void> => {
+      conversions += 1
+      await sharp({ create: { width: 800, height: 600, channels: 3, background: '#556677' } }).tiff().toFile(output)
+    }
+  }
+  const service = new DerivativeService({
+    cache: new PhotoCache(join(directory, 'cache')),
+    standardFallback
+  })
+
+  const result = await service.ensure(mediaFile(source), 'thumbnail', new AbortController().signal)
+
+  assert.equal(conversions, 1)
+  assert.equal(result.width <= 480 && result.height <= 480, true)
+})

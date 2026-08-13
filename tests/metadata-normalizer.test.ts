@@ -35,3 +35,9 @@ test('gestisce metadata mancanti o malformati senza inventare valori', () => {
     exposureSeconds: null, focalLengthMm: null, colorProfile: null, keywords: []
   })
 })
+
+test('usa UniqueCameraModel per i DNG senza tag Make e Model', () => {
+  const metadata = normalizePhotoMetadata({ 'EXIF:UniqueCameraModel': 'Blackmagic Micro Cinema Camera' })
+
+  assert.equal(metadata.cameraModel, 'Blackmagic Micro Cinema Camera')
+})

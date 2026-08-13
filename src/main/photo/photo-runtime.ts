@@ -12,6 +12,7 @@ import {
 } from './photo-pipeline.ts'
 import { RawHelper } from './raw-helper.ts'
 import { PhotoQueue } from './photo-queue.ts'
+import { MacImageHelper } from './mac-image-helper.ts'
 
 export interface PhotoRuntimeOptions {
   db: DatabaseSync
@@ -40,7 +41,11 @@ export class PhotoRuntime {
       : join(options.appPath, 'resources', 'bin', 'darwin-arm64', 'simple_dcraw')
     this.rawHelper = new RawHelper({ simpleDcrawPath: binaryPath })
     const cache = new PhotoCache(join(options.userDataPath, 'photo-cache'))
-    this.derivatives = new DerivativeService({ cache, rawHelper: this.rawHelper })
+    this.derivatives = new DerivativeService({
+      cache,
+      rawHelper: this.rawHelper,
+      standardFallback: new MacImageHelper()
+    })
     this.pipeline = new PhotoPipeline({
       repository: this.repository,
       processor: new ProfessionalPhotoProcessor(this.exifTool, this.derivatives)

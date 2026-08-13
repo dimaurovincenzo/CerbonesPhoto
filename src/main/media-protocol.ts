@@ -30,7 +30,14 @@ export function registerPrivilegedSchemes(): void {
     },
     {
       scheme: 'preview',
-      privileges: { standard: false, supportFetchAPI: true, stream: false, bypassCSP: false }
+      privileges: {
+        standard: false,
+        secure: true,
+        supportFetchAPI: true,
+        corsEnabled: true,
+        stream: false,
+        bypassCSP: false
+      }
     }
   ])
 }

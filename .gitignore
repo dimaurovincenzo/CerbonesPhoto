@@ -10,3 +10,4 @@ release
 build/Release
 artifacts
 .worktrees
+tests/fixtures/raw/samples/

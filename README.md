@@ -51,6 +51,29 @@ La compatibilità reale di un RAW dipende anche dal modello di fotocamera e dall
 variante del file: un'estensione riconosciuta non viene dichiarata certificata
 senza un campione autorizzato passato nella matrice di test.
 
+### Matrice RAW verificata
+
+I campioni non vengono committati. `npm run fixtures:raw` scarica esclusivamente
+file CC0 da [raw.pixls.us](https://raw.pixls.us/), verifica ogni SHA-256 e genera
+il manifest riproducibile. `tests/raw-matrix.test.ts` controlla metadati,
+thumbnail, preview sRGB e hash invariato dell'originale.
+
+| Formato | Campione verificato | Esito |
+| --- | --- | --- |
+| CR2 | Canon EOS 40D sRAW2 | ready |
+| CR3 | Canon EOS R6 | ready |
+| NEF | Nikon COOLSCAN IV ED | ready |
+| ARW | Sony ILCE-7S | ready |
+| RAF | Fujifilm FinePix S5000 | ready |
+| ORF | Olympus E-10 | ready |
+| RW2 | Panasonic DMC-LX7 | ready |
+| DNG | Blackmagic Micro Cinema Camera | ready |
+| PEF | Pentax K10D | ready |
+
+La matrice standard genera e verifica JPEG, PNG, TIFF, HEIC, HEIF, WebP, BMP e
+AVIF. HEIC/HEIF e altri contenitori ImageIO non decodificabili da libvips usano
+il fallback macOS `sips`, senza scrivere accanto all'originale.
+
 ## Altri formati multimediali
 
 - audio: MP3, M4A, AAC, WAV, FLAC, OGG/OGA, Opus, AIFF;
