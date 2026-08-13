@@ -6,7 +6,7 @@
 
 **Architecture:** Lo scanner indicizza rapidamente senza decodificare; una coda nel main process assegna priorità ai file visibili e delega metadati a ExifTool e RAW a un helper LibRaw `arm64`. SQLite conserva stato e metadati normalizzati, mentre miniature e preview sRGB restano in una cache versionata servita da protocolli Electron validati.
 
-**Tech Stack:** Electron 43, Node 24, React 19, TypeScript 7, Zustand 5, node:sqlite, Sharp/libvips, ExifTool vendorizzato, LibRaw 0.22, CMake/C++20, Node test runner, electron-builder.
+**Tech Stack:** Electron 43, Node 24, React 19, TypeScript 7, Zustand 5, node:sqlite, Sharp/libvips, ExifTool vendorizzato, binario ufficiale LibRaw 0.22.2 per macOS arm64, Node test runner, electron-builder.
 
 **Spec:** `docs/superpowers/specs/2026-08-13-professional-photo-workflow-design.md`
 
@@ -51,9 +51,7 @@
 
 ### Helper nativo
 
-- `native/raw-helper/CMakeLists.txt`: build riproducibile `arm64`, LibRaw fissato.
-- `native/raw-helper/src/main.cpp`: CLI JSON stabile `probe`, `extract-preview`, `render`.
-- `scripts/build-raw-helper.sh`: build e copia in `resources/bin/darwin-arm64`.
+- `scripts/build-raw-helper.sh`: download verificato SHA-256 del binario ufficiale LibRaw e copia in `resources/bin/darwin-arm64`.
 - `scripts/verify-photo-engines.mjs`: architettura/versione/hash/health check.
 
 ### Renderer
