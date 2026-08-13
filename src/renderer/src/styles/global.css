@@ -8,6 +8,7 @@
     'Segoe UI', Roboto, sans-serif;
   --accent: #007aff;
   --accent-hover: #0066d6;
+  --danger: #c9342b;
 
   --text-primary: #1d1d1f;
   --text-secondary: #515154;
@@ -706,12 +707,21 @@ textarea:focus-visible {
   opacity: 0.7;
   font-size: 14px;
   line-height: 1;
-  padding: 0 3px;
+  width: 22px;
+  height: 22px;
+  margin: -3px -2px -3px 0;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
   cursor: default;
 }
 .tag-chip__remove:hover {
   opacity: 1;
+  background: color-mix(in srgb, currentColor 12%, transparent);
 }
+.tag-chip__remove:active { transform: scale(0.92); }
+.tag-chip__remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .color-swatch {
   width: 22px;
@@ -900,7 +910,6 @@ textarea:focus-visible {
   margin-bottom: 10px;
 }
 .inspector__add {
-  margin-left: auto;
   border: none;
   background: transparent;
   font-family: inherit;
@@ -911,6 +920,20 @@ textarea:focus-visible {
   letter-spacing: 0;
   font-weight: 500;
 }
+.inspector__sectionhead > .inspector__clear:first-of-type,
+.inspector__sectionhead > .inspector__add:first-of-type { margin-left: auto; }
+.inspector__clear {
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.inspector__clear:hover { text-decoration: underline; }
+.inspector__clear:active { transform: scale(0.97); }
 .inspector__add:hover {
   text-decoration: underline;
 }
@@ -1464,6 +1487,7 @@ textarea:focus-visible {
   :root {
     --accent: #0a84ff;
     --accent-hover: #409cff;
+    --danger: #ff6961;
     --text-primary: #f5f5f7;
     --text-secondary: #c7c7cc;
     --text-tertiary: #a1a1a6;

@@ -189,6 +189,23 @@ function createWindow(): void {
             window.cartelli.folders.getTags(rootFolder.id),
             window.cartelli.folders.getCategories(rootFolder.id)
           ])
+          await Promise.all([
+            window.cartelli.folders.setTags(rootFolder.id, []),
+            window.cartelli.folders.setCategories(rootFolder.id, [])
+          ])
+          const [removedTags, removedCategories, preservedTags, preservedCategories] = await Promise.all([
+            window.cartelli.folders.getTags(rootFolder.id),
+            window.cartelli.folders.getCategories(rootFolder.id),
+            window.cartelli.tags.list(),
+            window.cartelli.categories.list()
+          ])
+          const labelRemoval = removedTags.length === 0 && removedCategories.length === 0 &&
+            preservedTags.some((tag) => tag.id === smokeTag.id) &&
+            preservedCategories.some((category) => category.id === smokeCategory.id)
+          await Promise.all([
+            window.cartelli.folders.setTags(rootFolder.id, [smokeTag.id]),
+            window.cartelli.folders.setCategories(rootFolder.id, [smokeCategory.id, smokeSubcategory.id])
+          ])
           const mediaCard = await waitFor('.media-card')
           const imageCard = await waitFor('.media-card--image')
           imageCard?.querySelector('.media-card__primary')?.click()
@@ -279,6 +296,7 @@ function createWindow(): void {
             labels: assignedTags.some((tag) => tag.id === smokeTag.id) &&
               assignedCategories.some((category) => category.id === smokeCategory.id) &&
               assignedCategories.some((category) => category.id === smokeSubcategory.id),
+            labelRemoval,
             markerOrder: orderedTags[0]?.id === smokeTagSecond.id &&
               orderedCategories[0]?.id === smokeCategorySecond.id,
             resizable: sidebarAfter > sidebarBefore,
@@ -290,13 +308,13 @@ function createWindow(): void {
       `).then(async (state: {
         shell: boolean; fatal: boolean; title: string; bilingual: boolean; filters: boolean
         lightboxOpened: boolean; zoomWorks: boolean; progressivePreview: boolean; photoCanvasFitsStage: boolean; photoCanvasMetrics: unknown; photoControls: boolean; about: boolean; updateStatus: boolean; signature: boolean
-        inspectorHidden: boolean; noTechnicalPaths: boolean; labels: boolean; markerOrder: boolean
+        inspectorHidden: boolean; noTechnicalPaths: boolean; labels: boolean; labelRemoval: boolean; markerOrder: boolean
         resizable: boolean; tabs: boolean; noPageOverflow: boolean
       }) => {
         if (!state.shell || state.fatal || !state.bilingual || !state.filters ||
             !state.lightboxOpened || !state.zoomWorks || !state.progressivePreview || !state.photoCanvasFitsStage || !state.photoControls || !state.about || !state.updateStatus || !state.signature ||
             !state.inspectorHidden || !state.noTechnicalPaths ||
-            !state.labels || !state.markerOrder || !state.resizable || !state.tabs || !state.noPageOverflow) {
+            !state.labels || !state.labelRemoval || !state.markerOrder || !state.resizable || !state.tabs || !state.noPageOverflow) {
           throw new Error(`Renderer non valido: ${JSON.stringify(state)}`)
         }
         const screenshotPath = process.env['CARTELLI_SCREENSHOT']

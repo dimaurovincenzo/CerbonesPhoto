@@ -3,12 +3,13 @@ import type { Tag } from '@shared/types'
 interface Props {
   tag: Tag
   onRemove?: () => void
+  removeLabel?: string
   onClick?: () => void
   active?: boolean
 }
 
 /** Chip di un tag con punto colorato. Clickabile (filtro) e con rimozione opzionale. */
-export function TagChip({ tag, onRemove, onClick, active }: Props): React.JSX.Element {
+export function TagChip({ tag, onRemove, removeLabel, onClick, active }: Props): React.JSX.Element {
   return (
     <span
       className={`tag-chip${active ? ' is-active' : ''}${onClick ? ' is-clickable' : ''}`}
@@ -19,12 +20,14 @@ export function TagChip({ tag, onRemove, onClick, active }: Props): React.JSX.El
       <span className="tag-chip__name">{tag.name}</span>
       {onRemove && (
         <button
+          type="button"
           className="tag-chip__remove"
           onClick={(e) => {
             e.stopPropagation()
             onRemove()
           }}
-          aria-label="Rimuovi"
+          aria-label={removeLabel ?? `Rimuovi etichetta ${tag.name}`}
+          title={removeLabel ?? `Rimuovi etichetta ${tag.name}`}
         >
           ×
         </button>

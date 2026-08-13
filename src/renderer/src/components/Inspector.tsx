@@ -5,6 +5,7 @@ import { useLabelsStore } from '@renderer/stores/labels'
 import { selectFolderCategoryIds, selectFolderTagIds } from '@renderer/stores/selectors'
 import { TagChip } from './TagChip'
 import { CategoryAssignMenu, TagAssignMenu } from './AssignMenus'
+import { clearAssignedIds, removeAssignedId } from './label-assignment'
 
 const fmtDate = (ms: number | null): string =>
   ms ? new Date(ms).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
@@ -37,10 +38,10 @@ export function Inspector(): React.JSX.Element | null {
   if (!folder) return null
 
   const removeTag = (id: number): void => {
-    void assignTags(folder.id, tags.filter((t) => t.id !== id).map((t) => t.id))
+    void assignTags(folder.id, removeAssignedId(tagIds, id))
   }
   const removeCat = (id: number): void => {
-    void assignCategories(folder.id, categories.filter((c) => c.id !== id).map((c) => c.id))
+    void assignCategories(folder.id, removeAssignedId(categoryIds, id))
   }
 
   return (
@@ -70,7 +71,12 @@ export function Inspector(): React.JSX.Element | null {
       <section className="inspector__section">
         <div className="inspector__sectionhead">
           <TagIcon size={13} />
-          <span>Tag</span>
+          <span>Etichette</span>
+          {tags.length > 0 && (
+            <button className="inspector__clear" onClick={() => void assignTags(folder.id, clearAssignedIds())}>
+              Rimuovi tutte
+            </button>
+          )}
           <button className="inspector__add" onClick={() => setTagMenu((v) => !v)}>
             + Aggiungi
           </button>
@@ -78,7 +84,7 @@ export function Inspector(): React.JSX.Element | null {
         <div className="inspector__chips">
           {tags.length === 0 && <span className="inspector__empty">Nessun tag</span>}
           {tags.map((t) => (
-            <TagChip key={t.id} tag={t} onRemove={() => removeTag(t.id)} />
+            <TagChip key={t.id} tag={t} onRemove={() => removeTag(t.id)} removeLabel={`Rimuovi etichetta ${t.name}`} />
           ))}
         </div>
         {tagMenu && <TagAssignMenu folderId={folder.id} onClose={() => setTagMenu(false)} />}
@@ -88,6 +94,11 @@ export function Inspector(): React.JSX.Element | null {
         <div className="inspector__sectionhead">
           <FolderTree size={13} />
           <span>Categorie</span>
+          {categories.length > 0 && (
+            <button className="inspector__clear" onClick={() => void assignCategories(folder.id, clearAssignedIds())}>
+              Rimuovi tutte
+            </button>
+          )}
           <button className="inspector__add" onClick={() => setCatMenu((v) => !v)}>
             + Aggiungi
           </button>
@@ -99,6 +110,7 @@ export function Inspector(): React.JSX.Element | null {
               key={c.id}
               tag={{ id: c.id, name: c.name, color: c.color ?? '#8E8E93', sortOrder: c.sortOrder, createdAt: 0 }}
               onRemove={() => removeCat(c.id)}
+              removeLabel={`Rimuovi categoria ${c.name}`}
             />
           ))}
         </div>
