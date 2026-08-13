@@ -43,8 +43,37 @@ CREATE TABLE IF NOT EXISTS files (
   hash           TEXT,
   is_favorite    INTEGER NOT NULL DEFAULT 0 CHECK (is_favorite IN (0,1)),
   metadata_json  TEXT,
+  processing_state TEXT NOT NULL DEFAULT 'pending' CHECK (processing_state IN ('pending','processing','ready','partial','failed')),
+  photo_format   TEXT,
+  is_raw         INTEGER NOT NULL DEFAULT 0 CHECK (is_raw IN (0,1)),
+  camera_make    TEXT,
+  camera_model   TEXT,
+  captured_at    TEXT,
+  orientation    INTEGER,
+  color_profile  TEXT,
+  pipeline_version INTEGER NOT NULL DEFAULT 1,
+  processing_error_code TEXT,
+  processing_error_message TEXT,
+  last_processed_at INTEGER,
   created_at     INTEGER NOT NULL,
   updated_at     INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS file_derivatives (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  file_id         INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+  level           TEXT NOT NULL CHECK (level IN ('thumbnail','preview','high-resolution')),
+  path            TEXT NOT NULL,
+  mime            TEXT NOT NULL,
+  width           INTEGER NOT NULL,
+  height          INTEGER NOT NULL,
+  size_bytes      INTEGER NOT NULL,
+  cache_key       TEXT NOT NULL,
+  pipeline_version INTEGER NOT NULL,
+  status          TEXT NOT NULL DEFAULT 'ready' CHECK (status IN ('pending','processing','ready','failed')),
+  last_accessed_at INTEGER NOT NULL,
+  created_at      INTEGER NOT NULL,
+  UNIQUE(file_id, level)
 );
 
 -- ----------------------------------------------------------------------
@@ -106,6 +135,11 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE INDEX IF NOT EXISTS idx_folders_parent         ON folders(parent_id);
 CREATE INDEX IF NOT EXISTS idx_files_folder           ON files(folder_id);
 CREATE INDEX IF NOT EXISTS idx_files_kind             ON files(kind);
+CREATE INDEX IF NOT EXISTS idx_files_processing       ON files(processing_state);
+CREATE INDEX IF NOT EXISTS idx_files_captured_at      ON files(captured_at);
+CREATE INDEX IF NOT EXISTS idx_files_camera           ON files(camera_make, camera_model);
+CREATE INDEX IF NOT EXISTS idx_derivatives_file       ON file_derivatives(file_id);
+CREATE INDEX IF NOT EXISTS idx_derivatives_accessed   ON file_derivatives(last_accessed_at);
 CREATE INDEX IF NOT EXISTS idx_folder_tags_tag        ON folder_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_folder_categories_cat  ON folder_categories(category_id);
 CREATE INDEX IF NOT EXISTS idx_file_tags_tag          ON file_tags(tag_id);

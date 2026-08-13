@@ -40,6 +40,18 @@ export interface MediaFile {
   hash: string | null
   isFavorite: boolean
   metadataJson: string | null
+  processingState: import('./photo-types').PhotoProcessingState
+  photoFormat: string | null
+  isRaw: boolean
+  cameraMake: string | null
+  cameraModel: string | null
+  capturedAt: string | null
+  orientation: number | null
+  colorProfile: string | null
+  pipelineVersion: number
+  processingErrorCode: string | null
+  processingErrorMessage: string | null
+  lastProcessedAt: number | null
   createdAt: number
   updatedAt: number
 }

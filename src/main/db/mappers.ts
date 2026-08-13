@@ -1,4 +1,5 @@
 import type { Category, Folder, MediaFile, MediaKind, Tag } from '@shared/types'
+import type { PhotoProcessingState } from '@shared/photo-types'
 
 type Row = Record<string, unknown>
 
@@ -58,6 +59,18 @@ export function mapFile(r: Row): MediaFile {
     hash: (r.hash as string | null) ?? null,
     isFavorite: Boolean(r.is_favorite),
     metadataJson: (r.metadata_json as string | null) ?? null,
+    processingState: (r.processing_state as PhotoProcessingState | undefined) ?? 'pending',
+    photoFormat: (r.photo_format as string | null) ?? null,
+    isRaw: Boolean(r.is_raw),
+    cameraMake: (r.camera_make as string | null) ?? null,
+    cameraModel: (r.camera_model as string | null) ?? null,
+    capturedAt: (r.captured_at as string | null) ?? null,
+    orientation: (r.orientation as number | null) ?? null,
+    colorProfile: (r.color_profile as string | null) ?? null,
+    pipelineVersion: (r.pipeline_version as number | undefined) ?? 1,
+    processingErrorCode: (r.processing_error_code as string | null) ?? null,
+    processingErrorMessage: (r.processing_error_message as string | null) ?? null,
+    lastProcessedAt: (r.last_processed_at as number | null) ?? null,
     createdAt: r.created_at as number,
     updatedAt: r.updated_at as number
   }
