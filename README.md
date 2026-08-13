@@ -2,6 +2,16 @@
 
 Organizzatore di cartelle multimediale per macOS (Electron + React + TypeScript).
 
+[Scarica l'ultima versione](https://github.com/dimaurovincenzo/CerbonesPhoto/releases/latest)
+
+## Anteprima
+
+![Catalogo CerbonesPhoto](docs/screenshots/catalog.png)
+
+| Visualizzatore integrato | Informazioni e motori fotografici |
+| --- | --- |
+| ![Visualizzatore integrato](docs/screenshots/viewer.png) | ![Schermata About](docs/screenshots/about.png) |
+
 ## Sviluppo
 
 ```bash
@@ -62,8 +72,9 @@ Le etichette sono ibride: **categorie gerarchiche** + **tag piatti colorati**.
 ## Ricerca bilingue
 
 La ricerca globale lavora offline sui nomi già indicizzati di cartelle e file.
-I termini italiani e inglesi più comuni sono equivalenti: per esempio `mare`
-trova anche file con `sea` nel nome. Nessun nome o percorso lascia il Mac.
+Il dizionario fotografico e personale italiano/inglese comprende sinonimi,
+plurali e concetti composti: per esempio `mare` trova `sea`, mentre `barca`
+trova anche `123_boat_23fs.mp3`. Nessun nome o percorso lascia il Mac.
 
 ## Workflow fotografico
 
