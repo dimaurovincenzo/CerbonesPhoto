@@ -197,7 +197,20 @@ function createWindow(): void {
           while (Date.now() - previewStarted < 4000 && !zoomable?.querySelector('img')?.src.startsWith('blob:')) {
             await new Promise((done) => setTimeout(done, 50))
           }
-          const progressivePreview = Boolean(zoomable?.querySelector('img')?.src.startsWith('blob:'))
+          const photoImage = zoomable?.querySelector('img')
+          const progressivePreview = Boolean(photoImage?.src.startsWith('blob:'))
+          const imageStyle = photoImage ? getComputedStyle(photoImage) : null
+          const photoCanvasMetrics = {
+            stage: [zoomable?.clientWidth ?? 0, zoomable?.clientHeight ?? 0],
+            image: [imageStyle ? Number.parseFloat(imageStyle.width) : 0, imageStyle ? Number.parseFloat(imageStyle.height) : 0],
+            fit: imageStyle?.objectFit ?? '',
+            scale: zoomable?.querySelector('.zoomable-photo__scale')?.textContent ?? ''
+          }
+          const photoCanvasFitsStage = Boolean(zoomable && imageStyle) &&
+            Math.abs(Number.parseFloat(imageStyle.width) - zoomable.clientWidth) <= 1 &&
+            Math.abs(Number.parseFloat(imageStyle.height) - zoomable.clientHeight) <= 1 &&
+            imageStyle.objectFit === 'contain' &&
+            zoomable.querySelector('.zoomable-photo__scale')?.textContent === '100%'
           const zoomIn = zoomable?.querySelector('[aria-label="Aumenta zoom"]')
           zoomIn?.click()
           await new Promise((done) => requestAnimationFrame(() => done()))
@@ -255,6 +268,8 @@ function createWindow(): void {
             lightboxOpened: photoLightboxOpened,
             zoomWorks,
             progressivePreview,
+            photoCanvasFitsStage,
+            photoCanvasMetrics,
             photoControls: !pausedBefore.paused && pausedDuring.paused && !pausedAfter.paused,
             about: Boolean(aboutDialog) && lensJoke && versionJoke && polaroidJoke,
             updateStatus,
@@ -274,12 +289,12 @@ function createWindow(): void {
         })))
       `).then(async (state: {
         shell: boolean; fatal: boolean; title: string; bilingual: boolean; filters: boolean
-        lightboxOpened: boolean; zoomWorks: boolean; progressivePreview: boolean; photoControls: boolean; about: boolean; updateStatus: boolean; signature: boolean
+        lightboxOpened: boolean; zoomWorks: boolean; progressivePreview: boolean; photoCanvasFitsStage: boolean; photoCanvasMetrics: unknown; photoControls: boolean; about: boolean; updateStatus: boolean; signature: boolean
         inspectorHidden: boolean; noTechnicalPaths: boolean; labels: boolean; markerOrder: boolean
         resizable: boolean; tabs: boolean; noPageOverflow: boolean
       }) => {
         if (!state.shell || state.fatal || !state.bilingual || !state.filters ||
-            !state.lightboxOpened || !state.zoomWorks || !state.progressivePreview || !state.photoControls || !state.about || !state.updateStatus || !state.signature ||
+            !state.lightboxOpened || !state.zoomWorks || !state.progressivePreview || !state.photoCanvasFitsStage || !state.photoControls || !state.about || !state.updateStatus || !state.signature ||
             !state.inspectorHidden || !state.noTechnicalPaths ||
             !state.labels || !state.markerOrder || !state.resizable || !state.tabs || !state.noPageOverflow) {
           throw new Error(`Renderer non valido: ${JSON.stringify(state)}`)

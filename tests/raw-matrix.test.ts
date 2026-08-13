@@ -64,6 +64,11 @@ test('matrice RAW CC0: metadata, preview sRGB e originali immutati', async (t) =
       assert.equal(thumbnail.width <= 480 && thumbnail.height <= 480, true)
       assert.equal(preview.width <= 2048 && preview.height <= 2048, true)
       assert.equal(previewMetadata.space, 'srgb')
+      if (metadata.width && metadata.height && previewMetadata.width && previewMetadata.height) {
+        const sourceRatio = metadata.width / metadata.height
+        const previewRatio = previewMetadata.width / previewMetadata.height
+        assert.ok(Math.abs(sourceRatio - previewRatio) <= 0.02, 'la preview deve conservare l’inquadratura completa')
+      }
       assert.equal(await sha256(sourcePath), before)
       assert.equal(fixture.expectedOutcome, 'ready')
       results.push({
