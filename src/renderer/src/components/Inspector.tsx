@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { FolderTree, Tag as TagIcon, Folder as FolderIcon } from 'lucide-react'
+import { FileAudio, FolderSearch, FolderTree, Tag as TagIcon, Folder as FolderIcon } from 'lucide-react'
 import { useFoldersStore } from '@renderer/stores/folders'
 import { useLabelsStore } from '@renderer/stores/labels'
 import { selectFolderCategoryIds, selectFolderTagIds } from '@renderer/stores/selectors'
 import { TagChip } from './TagChip'
 import { CategoryAssignMenu, TagAssignMenu } from './AssignMenus'
 import { clearAssignedIds, removeAssignedId } from './label-assignment'
+import { currentPlayerFile, usePlayerStore } from '@renderer/stores/player'
 
 const fmtDate = (ms: number | null): string =>
   ms ? new Date(ms).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
@@ -21,6 +22,8 @@ export function Inspector(): React.JSX.Element | null {
   const categoryIds = useLabelsStore((s) => selectFolderCategoryIds(s, selectedId ?? -1))
   const assignTags = useLabelsStore((s) => s.assignTags)
   const assignCategories = useLabelsStore((s) => s.assignCategories)
+  const queue = usePlayerStore((s) => s.queue)
+  const playerIndex = usePlayerStore((s) => s.index)
 
   const [tagMenu, setTagMenu] = useState(false)
   const [catMenu, setCatMenu] = useState(false)
@@ -36,6 +39,27 @@ export function Inspector(): React.JSX.Element | null {
 
   const folder = folders.find((f) => f.id === selectedId)
   if (!folder) return null
+  const playingFile = currentPlayerFile(queue, playerIndex)
+
+  if (playingFile) {
+    return (
+      <aside className="inspector">
+        <div className="inspector__header">
+          <FileAudio size={15} className="inspector__icon" />
+          <div className="inspector__title">{playingFile.name}</div>
+        </div>
+        <section className="inspector__meta">
+          <div className="meta-row">
+            <span className="meta-row__k">In riproduzione</span>
+            <span className="meta-row__v">Brano {playerIndex + 1} di {queue.length}</span>
+          </div>
+          <button className="btn btn--ghost btn--sm" onClick={() => void window.cartelli.files.showInFinder(playingFile.id)}>
+            <FolderSearch size={13} /> Mostra nel Finder
+          </button>
+        </section>
+      </aside>
+    )
+  }
 
   const removeTag = (id: number): void => {
     void assignTags(folder.id, removeAssignedId(tagIds, id))

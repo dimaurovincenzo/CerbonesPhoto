@@ -31,11 +31,19 @@ export function SearchResults({ query }: { query: string }): React.JSX.Element {
   const clearResults = useSearchStore((s) => s.clear)
   const selectFolder = useFoldersStore((s) => s.selectFolder)
   const clearQuery = useFoldersStore((s) => s.setSearchQuery)
+  const selectedId = useFoldersStore((s) => s.selectedFolderId)
+  const folders = useFoldersStore((s) => s.folders)
+  const scopeFolder = folders.find((folder) => folder.id === selectedId)
+  const scopeLabel = !scopeFolder
+    ? 'Ricerca globale'
+    : scopeFolder.isRoot
+      ? 'Ricerca nella raccolta e sottocartelle'
+      : 'Ricerca nella cartella selezionata'
 
   useEffect(() => {
-    const timer = window.setTimeout(() => void run(query), 160)
+    const timer = window.setTimeout(() => void run(query, selectedId), 160)
     return () => window.clearTimeout(timer)
-  }, [query, run])
+  }, [query, run, selectedId])
 
   useEffect(() => clearResults, [clearResults])
 
@@ -76,7 +84,7 @@ export function SearchResults({ query }: { query: string }): React.JSX.Element {
     <section className="search-results" aria-live="polite">
       <header className="search-results__header">
         <div>
-          <p className="search-results__eyebrow">Ricerca globale · Italiano + English</p>
+          <p className="search-results__eyebrow">{scopeLabel} · Italiano + English</p>
           <h1>Risultati per “{query.trim()}”</h1>
         </div>
         {!loading && <span className="search-results__count">{resultCountLabel(visibleResults.length)}</span>}

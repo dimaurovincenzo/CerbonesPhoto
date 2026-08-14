@@ -5,7 +5,7 @@ interface SearchState {
   results: SearchResult[]
   loading: boolean
   error: string | null
-  run: (query: string) => Promise<void>
+  run: (query: string, scopeFolderId: number | null) => Promise<void>
   clear: () => void
 }
 
@@ -16,7 +16,7 @@ export const useSearchStore = create<SearchState>()((set) => ({
   loading: false,
   error: null,
 
-  run: async (query) => {
+  run: async (query, scopeFolderId) => {
     const requestId = ++requestSequence
     if (query.trim().length < 2) {
       set({ results: [], loading: false, error: null })
@@ -24,7 +24,7 @@ export const useSearchStore = create<SearchState>()((set) => ({
     }
     set({ loading: true, error: null })
     try {
-      const results = await window.cartelli.files.search(query, 60)
+      const results = await window.cartelli.files.search(query, 60, scopeFolderId)
       if (requestId === requestSequence) set({ results, loading: false })
     } catch (error) {
       if (requestId === requestSequence) {

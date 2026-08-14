@@ -8,7 +8,7 @@ import {
   Volume2,
   VolumeX
 } from 'lucide-react'
-import { usePlayerStore } from '@renderer/stores/player'
+import { currentPlayerFile, usePlayerStore } from '@renderer/stores/player'
 import type { MediaFile } from '@shared/types'
 import { connectMediaSession, type MediaSessionPort } from './media-session'
 
@@ -57,7 +57,7 @@ export function PlayerBar(): React.JSX.Element {
     return () => setAudioEl(null)
   }, [setAudioEl])
 
-  const current: MediaFile | undefined = index >= 0 ? queue[index] : undefined
+  const current: MediaFile | undefined = currentPlayerFile(queue, index)
   const hidden = !current
 
   useEffect(() => {

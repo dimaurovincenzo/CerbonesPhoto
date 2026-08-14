@@ -9,6 +9,11 @@ import type { MediaFile } from '@shared/types'
  */
 let audioEl: HTMLAudioElement | null = null
 
+/** File selezionato dal player; è la singola fonte per mini-player e informazioni laterali. */
+export function currentPlayerFile(queue: MediaFile[], index: number): MediaFile | undefined {
+  return index >= 0 && index < queue.length ? queue[index] : undefined
+}
+
 interface PlayerState {
   queue: MediaFile[]
   index: number

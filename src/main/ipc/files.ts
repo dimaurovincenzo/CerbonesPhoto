@@ -28,14 +28,26 @@ export function registerFilesIpc(): void {
     return rows.map(mapFile)
   })
 
-  ipcMain.handle('files:search', (_e, rawQuery: string, requestedLimit?: number) => {
+  ipcMain.handle('files:search', (_e, rawQuery: string, requestedLimit?: number, scopeFolderId?: number | null) => {
     const query = typeof rawQuery === 'string' ? rawQuery.trim().slice(0, 200) : ''
     if (query.length < 2) return []
 
     const limit = Math.min(Math.max(Number(requestedLimit) || MAX_SEARCH_RESULTS, 1), MAX_SEARCH_RESULTS)
+    const scope: number | null = typeof scopeFolderId === 'number' &&
+      Number.isSafeInteger(scopeFolderId) && scopeFolderId > 0
+      ? scopeFolderId
+      : null
     const db = getDb()
     const folders = db.prepare(
-      `WITH RECURSIVE folder_context(id, collection_name) AS (
+      `WITH RECURSIVE selected_scope(id, recursive) AS (
+         SELECT id, is_root FROM folders WHERE id = ?
+       ), scoped_folders(id) AS (
+         SELECT id FROM selected_scope
+         UNION ALL
+         SELECT child.id FROM folders AS child
+         JOIN scoped_folders AS scoped ON child.parent_id = scoped.id
+         JOIN selected_scope AS selected ON selected.recursive = 1
+       ), folder_context(id, collection_name) AS (
          SELECT id, COALESCE(display_name, name) FROM folders WHERE is_root = 1
          UNION ALL
          SELECT child.id, context.collection_name
@@ -47,13 +59,22 @@ export function registerFilesIpc(): void {
        FROM folders AS child
        LEFT JOIN folders AS parent ON parent.id = child.parent_id
        LEFT JOIN folder_context AS context ON context.id = child.id
-       WHERE child.is_root = 1 OR child.file_count > 0`
-    ).all() as {
+       WHERE (? IS NULL OR child.id IN (SELECT id FROM scoped_folders))
+         AND (child.is_root = 1 OR child.file_count > 0)`
+    ).all(scope, scope) as {
       id: number; name: string; display_name: string | null; path: string; is_root: number
       parent_name: string; collection_name: string
     }[]
     const files = db.prepare(
-      `WITH RECURSIVE folder_context(id, collection_name) AS (
+      `WITH RECURSIVE selected_scope(id, recursive) AS (
+         SELECT id, is_root FROM folders WHERE id = ?
+       ), scoped_folders(id) AS (
+         SELECT id FROM selected_scope
+         UNION ALL
+         SELECT child.id FROM folders AS child
+         JOIN scoped_folders AS scoped ON child.parent_id = scoped.id
+         JOIN selected_scope AS selected ON selected.recursive = 1
+       ), folder_context(id, collection_name) AS (
          SELECT id, COALESCE(display_name, name) FROM folders WHERE is_root = 1
          UNION ALL
          SELECT child.id, context.collection_name
@@ -64,8 +85,9 @@ export function registerFilesIpc(): void {
               COALESCE(context.collection_name, folders.display_name, folders.name) AS collection_name
        FROM files
        JOIN folders ON folders.id = files.folder_id
-       LEFT JOIN folder_context AS context ON context.id = folders.id`
-    ).all() as {
+       LEFT JOIN folder_context AS context ON context.id = folders.id
+       WHERE ? IS NULL OR files.folder_id IN (SELECT id FROM scoped_folders)`
+    ).all(scope, scope) as {
       id: number; folder_id: number; name: string; kind: MediaKind; mime: string | null
       folder_name: string; collection_name: string
     }[]

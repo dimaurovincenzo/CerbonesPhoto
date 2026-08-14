@@ -82,7 +82,8 @@ export interface FilesApi {
   /** File multimediali diretti di una cartella (non ricorsivo). */
   listByFolder: (folderId: number) => Promise<MediaFile[]>
   /** Ricerca globale offline su cartelle e file già indicizzati. */
-  search: (query: string, limit?: number) => Promise<SearchResult[]>
+  /** Ricerca nell'intero catalogo o nel perimetro della cartella selezionata. */
+  search: (query: string, limit?: number, scopeFolderId?: number | null) => Promise<SearchResult[]>
   /** Apre un file indicizzato nell'app predefinita del sistema. */
   open: (fileId: number) => Promise<void>
   /** Seleziona un file indicizzato nel Finder. */
