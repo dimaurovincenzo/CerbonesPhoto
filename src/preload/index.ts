@@ -46,7 +46,9 @@ const api: CartelliApi = {
   files: {
     listByFolder: (folderId) => ipcRenderer.invoke('files:listByFolder', folderId),
     search: (query, limit) => ipcRenderer.invoke('files:search', query, limit),
-    open: (fileId) => ipcRenderer.invoke('files:open', fileId)
+    open: (fileId) => ipcRenderer.invoke('files:open', fileId),
+    showInFinder: (fileId) => ipcRenderer.invoke('files:showInFinder', fileId),
+    startDrag: (fileId) => ipcRenderer.send('files:startDrag', fileId)
   },
   dialogs: {
     pickDirectory: () => ipcRenderer.invoke('dialogs:pickDirectory'),

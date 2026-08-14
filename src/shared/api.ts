@@ -85,6 +85,10 @@ export interface FilesApi {
   search: (query: string, limit?: number) => Promise<SearchResult[]>
   /** Apre un file indicizzato nell'app predefinita del sistema. */
   open: (fileId: number) => Promise<void>
+  /** Seleziona un file indicizzato nel Finder. */
+  showInFinder: (fileId: number) => Promise<void>
+  /** Avvia un drag nativo di un file indicizzato verso Finder o un'altra app. */
+  startDrag: (fileId: number) => void
 }
 
 export interface AppInfo {

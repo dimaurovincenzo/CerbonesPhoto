@@ -612,6 +612,10 @@ textarea:focus-visible {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
+.media-card[draggable="true"],
+.lightbox__stage[draggable="true"] { cursor: grab; }
+.media-card[draggable="true"]:active,
+.lightbox__stage[draggable="true"]:active { cursor: grabbing; }
 .media-card__thumb img {
   width: 100%;
   height: 100%;

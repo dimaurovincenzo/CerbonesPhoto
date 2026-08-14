@@ -1,10 +1,23 @@
-import { ipcMain, shell } from 'electron'
+import { ipcMain, nativeImage, shell } from 'electron'
 import { getDb } from '../db/connection'
 import { mapFile } from '../db/mappers'
 import { rankSearchCandidates } from '@shared/search'
 import type { MediaKind, SearchResult } from '@shared/types'
 
 const MAX_SEARCH_RESULTS = 60
+// L'icona deve essere non vuota su macOS per avviare un drag nativo verso Finder.
+const dragIcon = nativeImage.createFromDataURL(
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLqTAAAAABJRU5ErkJggg=='
+)
+
+function getIndexedFilePath(fileId: number): string {
+  if (!Number.isSafeInteger(fileId) || fileId <= 0) throw new Error('File non valido')
+  const row = getDb().prepare('SELECT path FROM files WHERE id = ?').get(fileId) as
+    | { path: string }
+    | undefined
+  if (!row) throw new Error('File non trovato nell’indice')
+  return row.path
+}
 
 export function registerFilesIpc(): void {
   /** File multimediali diretti di una cartella. */
@@ -88,13 +101,18 @@ export function registerFilesIpc(): void {
   })
 
   ipcMain.handle('files:open', async (_e, fileId: number) => {
-    if (!Number.isSafeInteger(fileId) || fileId <= 0) throw new Error('File non valido')
-    const row = getDb().prepare('SELECT path FROM files WHERE id = ?').get(fileId) as
-      | { path: string }
-      | undefined
-    if (!row) throw new Error('File non trovato nell’indice')
+    const path = getIndexedFilePath(fileId)
 
-    const error = await shell.openPath(row.path)
+    const error = await shell.openPath(path)
     if (error) throw new Error(`Impossibile aprire il file: ${error}`)
+  })
+
+  ipcMain.handle('files:showInFinder', (_e, fileId: number) => {
+    shell.showItemInFolder(getIndexedFilePath(fileId))
+  })
+
+  ipcMain.on('files:startDrag', (event, fileId: number) => {
+    const path = getIndexedFilePath(fileId)
+    event.sender.startDrag({ file: path, icon: dragIcon })
   })
 }

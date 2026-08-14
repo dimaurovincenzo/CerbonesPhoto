@@ -40,6 +40,11 @@ export function MediaCard({ file, onSelect, onVisibilityChange }: Props): React.
       className={`media-card media-card--${file.kind}`}
       title={file.name}
       aria-busy={isBusy}
+      draggable
+      onDragStart={(event) => {
+        event.preventDefault()
+        window.cartelli.files.startDrag(file.id)
+      }}
     >
       <button
         type="button"

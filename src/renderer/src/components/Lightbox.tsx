@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, ExternalLink, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ExternalLink, FolderSearch, X } from 'lucide-react'
 import { useLightboxStore } from '@renderer/stores/lightbox'
 import { ZoomablePhoto } from './ZoomablePhoto'
 
@@ -61,7 +61,15 @@ export function Lightbox(): React.JSX.Element | null {
         </button>
       )}
 
-      <div className="lightbox__stage" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="lightbox__stage"
+        onClick={(e) => e.stopPropagation()}
+        draggable
+        onDragStart={(event) => {
+          event.preventDefault()
+          window.cartelli.files.startDrag(current.id)
+        }}
+      >
         {current.kind === 'image' ? (
           <ZoomablePhoto key={current.id} file={current} onOpenExternal={() => void window.cartelli.files.open(current.id)} />
         ) : !mediaError && current.kind === 'video' ? (
@@ -83,6 +91,9 @@ export function Lightbox(): React.JSX.Element | null {
       </div>
       <div className="lightbox__caption" onClick={(e) => e.stopPropagation()}>
         <span>{current.name} <span className="lightbox__count">· {index + 1}/{items.length}</span></span>
+        <button className="lightbox__open" onClick={() => void window.cartelli.files.showInFinder(current.id)}>
+          <FolderSearch size={12} /> Mostra nel Finder
+        </button>
         <button className="lightbox__open" onClick={() => void window.cartelli.files.open(current.id)}>
           <ExternalLink size={12} /> Apri nel sistema
         </button>
