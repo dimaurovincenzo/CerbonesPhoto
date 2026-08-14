@@ -3,8 +3,10 @@ import { FileAudio, FileImage, FileVideo, Folder, SearchX } from 'lucide-react'
 import type { SearchResult } from '@shared/types'
 import { useFoldersStore } from '@renderer/stores/folders'
 import { useLightboxStore } from '@renderer/stores/lightbox'
-import { usePlayerStore } from '@renderer/stores/player'
+import { currentPlayerFile, usePlayerStore } from '@renderer/stores/player'
 import { useSearchStore } from '@renderer/stores/search'
+import { orderSearchAudioQueue } from './search-audio-queue'
+import iconUrl from '../../../../build/icon.png'
 
 function ResultIcon({ result }: { result: SearchResult }): React.JSX.Element {
   if (result.resultKind === 'folder') return <Folder size={18} />
@@ -34,6 +36,9 @@ export function SearchResults({ query }: { query: string }): React.JSX.Element {
   const selectedId = useFoldersStore((s) => s.selectedFolderId)
   const folders = useFoldersStore((s) => s.folders)
   const scopeFolder = folders.find((folder) => folder.id === selectedId)
+  const playerQueue = usePlayerStore((s) => s.queue)
+  const playerIndex = usePlayerStore((s) => s.index)
+  const currentPlayer = currentPlayerFile(playerQueue, playerIndex)
   const scopeLabel = !scopeFolder
     ? 'Ricerca globale'
     : scopeFolder.isRoot
@@ -53,18 +58,24 @@ export function SearchResults({ query }: { query: string }): React.JSX.Element {
   )
 
   const openResult = async (result: SearchResult): Promise<void> => {
-    selectFolder(result.folderId)
     if (result.resultKind === 'folder') {
+      selectFolder(result.folderId)
       clearQuery('')
       return
     }
 
-    const files = await window.cartelli.files.listByFolder(result.folderId)
     if (result.mediaKind === 'image' || result.mediaKind === 'video') {
+      const files = await window.cartelli.files.listByFolder(result.folderId)
       const items = files.filter((file) => file.kind === 'image' || file.kind === 'video')
       useLightboxStore.getState().open(items, Math.max(0, items.findIndex((file) => file.id === result.id)))
     } else if (result.mediaKind === 'audio') {
-      const items = files.filter((file) => file.kind === 'audio')
+      const folderIds = [...new Set(results
+        .filter((candidate) => candidate.resultKind === 'file' && candidate.mediaKind === 'audio')
+        .map((candidate) => candidate.folderId))]
+      const filesByFolder = new Map(await Promise.all(folderIds.map(async (folderId) => (
+        [folderId, await window.cartelli.files.listByFolder(folderId)] as const
+      ))))
+      const items = orderSearchAudioQueue(results, filesByFolder)
       usePlayerStore.getState().playQueue(items, Math.max(0, items.findIndex((file) => file.id === result.id)))
     }
   }
@@ -109,10 +120,12 @@ export function SearchResults({ query }: { query: string }): React.JSX.Element {
       )}
       {!loading && !error && visibleResults.length > 0 && (
         <div className="search-results__list">
-          {visibleResults.map((result) => (
+          {visibleResults.map((result) => {
+            const isCurrent = result.resultKind === 'file' && result.id === currentPlayer?.id
+            return (
             <button
               key={`${result.resultKind}-${result.id}`}
-              className="search-result"
+              className={`search-result${isCurrent ? ' is-current' : ''}`}
               onClick={() => void openResult(result)}
             >
               <span className={`search-result__icon search-result__icon--${result.resultKind}`}>
@@ -125,8 +138,10 @@ export function SearchResults({ query }: { query: string }): React.JSX.Element {
               <span className="search-result__kind">
                 {result.resultKind === 'folder' ? 'Cartella' : mediaKindLabel(result.mediaKind)}
               </span>
+              {isCurrent && <img className="search-result__now-playing" src={iconUrl} alt="In riproduzione" />}
             </button>
-          ))}
+            )
+          })}
         </div>
       )}
     </section>

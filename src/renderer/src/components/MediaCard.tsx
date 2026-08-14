@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, FileAudio, FileImage, FileVideo, LoaderCircle, RotateCcw } from 'lucide-react'
 import type { MediaFile } from '@shared/types'
 import { usePhotoPipelineStore } from '@renderer/stores/photo-pipeline'
+import { currentPlayerFile, usePlayerStore } from '@renderer/stores/player'
 import { mediaCardActivation } from './media-card-actions'
+import iconUrl from '../../../../build/icon.png'
 
 interface Props {
   file: MediaFile
@@ -15,10 +17,13 @@ export function MediaCard({ file, onSelect, onVisibilityChange }: Props): React.
   const [thumbnailError, setThumbnailError] = useState(false)
   const cardRef = useRef<HTMLElement>(null)
   const retry = usePhotoPipelineStore((state) => state.retry)
+  const playerQueue = usePlayerStore((state) => state.queue)
+  const playerIndex = usePlayerStore((state) => state.index)
   const isImage = file.kind === 'image'
   const isVideo = file.kind === 'video'
   const isBusy = isImage && (file.processingState === 'pending' || file.processingState === 'processing')
   const needsAttention = isImage && (file.processingState === 'failed' || file.processingState === 'partial')
+  const nowPlaying = file.kind === 'audio' && currentPlayerFile(playerQueue, playerIndex)?.id === file.id
 
   useEffect(() => setThumbnailError(false), [file.id])
   useEffect(() => {
@@ -37,7 +42,7 @@ export function MediaCard({ file, onSelect, onVisibilityChange }: Props): React.
   return (
     <article
       ref={cardRef}
-      className={`media-card media-card--${file.kind}`}
+      className={`media-card media-card--${file.kind}${nowPlaying ? ' media-card--now-playing' : ''}`}
       title={file.name}
       aria-busy={isBusy}
       draggable
@@ -73,6 +78,7 @@ export function MediaCard({ file, onSelect, onVisibilityChange }: Props): React.
           <span className="media-card__badge">
             {file.kind === 'image' ? (file.isRaw ? 'RAW' : 'IMG') : file.kind === 'video' ? 'VID' : 'AUD'}
           </span>
+          {nowPlaying && <img className="media-card__now-playing" src={iconUrl} alt="In riproduzione" />}
           {isBusy && (
             <span className="media-card__state" role="status">
               <LoaderCircle className="is-spinning" size={14} /> Anteprima
