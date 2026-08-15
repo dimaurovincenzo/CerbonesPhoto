@@ -1,7 +1,7 @@
 {
   "name": "cerbones-photo",
   "productName": "CerbonesPhoto",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Organizzatore multimediale CerbonesPhoto per macOS",
   "repository": {
     "type": "git",
