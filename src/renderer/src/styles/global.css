@@ -644,7 +644,6 @@ textarea:focus-visible {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 32%, transparent);
 }
-.media-card__now-playing,
 .search-result__now-playing {
   width: 22px;
   height: 22px;
@@ -653,10 +652,10 @@ textarea:focus-visible {
   border: 2px solid #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
 }
-.media-card__now-playing {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;
+.media-card__brand-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
 }
 .media-card--video .media-card__thumb {
   background: linear-gradient(145deg, rgba(175, 82, 222, 0.08), rgba(88, 86, 214, 0.18));

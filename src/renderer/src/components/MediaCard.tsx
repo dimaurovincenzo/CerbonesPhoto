@@ -72,13 +72,12 @@ export function MediaCard({ file, onSelect, onVisibilityChange }: Props): React.
             />
           ) : (
             <div className="media-card__icon">
-              {isImage ? <FileImage size={30} strokeWidth={1.5} /> : isVideo ? <FileVideo size={30} strokeWidth={1.5} /> : <FileAudio size={30} strokeWidth={1.5} />}
+              {isImage ? <FileImage size={30} strokeWidth={1.5} /> : isVideo ? <FileVideo size={30} strokeWidth={1.5} /> : nowPlaying ? <img className="media-card__brand-logo" src={iconUrl} alt="CerbonesPhoto in riproduzione" /> : <FileAudio size={30} strokeWidth={1.5} />}
             </div>
           )}
           <span className="media-card__badge">
             {file.kind === 'image' ? (file.isRaw ? 'RAW' : 'IMG') : file.kind === 'video' ? 'VID' : 'AUD'}
           </span>
-          {nowPlaying && <img className="media-card__now-playing" src={iconUrl} alt="In riproduzione" />}
           {isBusy && (
             <span className="media-card__state" role="status">
               <LoaderCircle className="is-spinning" size={14} /> Anteprima

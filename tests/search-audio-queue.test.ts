@@ -28,7 +28,7 @@ test('la coda audio conserva l ordine dei risultati anche tra cartelle diverse',
   assert.deepEqual(orderSearchAudioQueue(results, filesByFolder).map((file) => file.id), [2, 1, 3])
 })
 
-test('risultati e card mostrano il logo per la traccia corrente', () => {
+test('la card sostituisce l icona audio con il logo solo per la traccia corrente', () => {
   const projectFile = (path: string): string => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
   const search = projectFile('src/renderer/src/components/SearchResults.tsx')
   const card = projectFile('src/renderer/src/components/MediaCard.tsx')
@@ -38,4 +38,5 @@ test('risultati e card mostrano il logo per la traccia corrente', () => {
   assert.match(card, /media-card--now-playing/)
   assert.match(search, /iconUrl/)
   assert.match(card, /iconUrl/)
+  assert.match(card, /nowPlaying \? <img[^>]+className="media-card__brand-logo"[^>]+src=\{iconUrl\}[^>]*\/> : <FileAudio/)
 })
